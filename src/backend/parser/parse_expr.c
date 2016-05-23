@@ -103,6 +103,8 @@ static char *percentileFuncString(PercentileExpr *p, Oid *argtypes, int arglen,
  *	function argument to the required type (via coerce_type())
  *	can apply transformExpr to an already-transformed subexpression.
  *	An example here is "SELECT count(*) + 1.0 FROM table".
+ *	3. CREATE TABLE t1 (LIKE t2 INCLUDING INDEXES) can pass in
+ *	already-transformed index expressions.
  * While it might be possible to eliminate these cases, the path of
  * least resistance so far has been to ensure that transformExpr() does
  * no damage if applied to an already-transformed tree.  This is pretty
@@ -1854,7 +1856,13 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 static Node *
 transformRowExpr(ParseState *pstate, RowExpr *r)
 {
-	RowExpr    *newr = makeNode(RowExpr);
+	RowExpr    *newr;
+
+	/* If we already transformed this node, do nothing */
+	if (OidIsValid(r->row_typeid))
+		return (Node *) r;
+
+	newr = makeNode(RowExpr);
 
 	/* Transform the field expressions */
 	newr->args = transformExpressionList(pstate, r->args);

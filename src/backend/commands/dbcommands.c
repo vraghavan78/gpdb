@@ -656,6 +656,7 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 	bool		shouldDispatch = (Gp_role == GP_ROLE_DISPATCH);
 	cqContext	cqc;
 	cqContext  *pcqCtx;
+	Snapshot	snapshot;
 
 	if (shouldDispatch)
 		if (Persistent_BeforePersistenceWork())
@@ -974,7 +975,6 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 		} while (check_db_file_conflict(dboid));
 	}
 
-
 	/* Remember this for dispatching to segDBs */
 	stmt->dbOid = dboid;
 
@@ -983,10 +983,10 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 		elog(DEBUG5, "shouldDispatch = true, dbOid = %d", dboid);
 
         /* 
-              * Dispatch the command to all primary segments.
-              *
-              * Doesn't wait for the QEs to finish execution.
-              */
+		 * Dispatch the command to all primary segments.
+		 *
+		 * Doesn't wait for the QEs to finish execution.
+		 */
         cdbdisp_dispatchUtilityStatement((Node *)stmt,
                                          true,      /* cancelOnError */
                                      	 true,      /* startTransaction */
@@ -1049,7 +1049,6 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 						   GetUserId(),
 						   "CREATE", "DATABASE"
 				);
-
 	
 	CHECK_FOR_INTERRUPTS();
 	
@@ -1063,6 +1062,29 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 	 * to fail with ENOENT.
 	 */
 	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
+
+	/*
+	 * Take an MVCC snapshot to use while scanning through pg_tablespace.  For
+	 * safety, copy the snapshot (this prevents it from changing if
+	 * something else were to request a snapshot during the loop).
+	 *
+	 * Traversing pg_tablespace with an MVCC snapshot is necessary to provide
+	 * us with a consistent view of the tablespaces that exist.  Using
+	 * SnapshotNow here would risk seeing the same tablespace multiple times,
+	 * or worse not seeing a tablespace at all, if its tuple is moved around
+	 * by a concurrent update (eg an ACL change).
+	 *
+	 * Inconsistency of this sort is inherent to all SnapshotNow scans, unless
+	 * some lock is held to prevent concurrent updates of the rows being
+	 * sought.	There should be a generic fix for that, but in the meantime
+	 * it's worth fixing this case in particular because we are doing very
+	 * heavyweight operations within the scan, so that the elapsed time for
+	 * the scan is vastly longer than for most other catalog scans.  That
+	 * means there's a much wider window for concurrent updates to cause
+	 * trouble here than anywhere else.  XXX this code should be changed
+	 * whenever a generic fix is implemented.
+	 */
+	snapshot = CopySnapshot(GetLatestSnapshot());
 
 	/*
 	 * Once we start copying subdirectories, we need to be able to clean 'em
@@ -1096,6 +1118,7 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 		info = DatabaseInfo_Collect(
 							src_dboid, 
 							src_deftablespace,
+							snapshot,
 							/* collectGpRelationNodeInfo */ true,
 							/* collectAppendOnlyCatalogSegmentInfo */ true,
 							/* scanFileSystem */ true);
@@ -1107,16 +1130,11 @@ createdb_int(CreatedbStmt *stmt, CdbDispatcherState *ds)
 
 		CHECK_FOR_INTERRUPTS();
 
-//		if (Debug_database_command_print)
-//			DatabaseInfo_Trace(info);
-
 		/*
 		 * Verify integrity of databae information.
 		 */
 		if (Debug_database_command_print)
 			pg_rusage_init(&ru_start);
-
-//		DatabaseInfo_Check(info);
 
 		if (Debug_database_command_print)
 			elog(NOTICE, "check phase: %s",
@@ -1549,19 +1567,13 @@ dropdb(const char *dbname, bool missing_ok)
 		info = DatabaseInfo_Collect(
 								db_id, 
 								defaultTablespace,
+								NULL,
 								/* collectGpRelationNodeInfo */ true,
 								/* collectAppendOnlyCatalogSegmentInfo */ false,
 								/* scanFileSystem */ true);
 
-//		if (Debug_database_command_print)
-//			DatabaseInfo_Trace(info);
-		
 		if (info->parentlessGpRelationNodesCount > 0)
 		{
-//			DatabaseInfo_Trace(info);
-
-//			pg_usleep(60 * 1000000L);
-			
 			elog(ERROR, "Found %d parentless gp_relation_node entries",
 				 info->parentlessGpRelationNodesCount);
 		}
@@ -2356,6 +2368,79 @@ have_createdb_privilege(void)
 }
 
 /*
+ * Remove tablespace directories
+ *
+ * We don't know what tablespaces db_id is using, so iterate through all
+ * tablespaces removing <tablespace>/db_id
+ */
+static void
+remove_dbtablespaces(Oid db_id)
+{
+	Relation	rel;
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+	Snapshot	snapshot;
+
+	/*
+	 * As in createdb(), we'd better use an MVCC snapshot here, since this
+	 * scan can run for a long time.  Duplicate visits to tablespaces would be
+	 * harmless, but missing a tablespace could result in permanently leaked
+	 * files.
+	 *
+	 * XXX change this when a generic fix for SnapshotNow races is implemented
+	 */
+	snapshot = CopySnapshot(GetLatestSnapshot());
+
+	rel = heap_open(TableSpaceRelationId, AccessShareLock);
+	scan = heap_beginscan(rel, snapshot, 0, NULL);
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		Oid			dsttablespace = HeapTupleGetOid(tuple);
+		char	   *dstpath;
+		struct stat st;
+
+		/* Don't mess with the global tablespace */
+		if (dsttablespace == GLOBALTABLESPACE_OID)
+			continue;
+
+		dstpath = GetDatabasePath(db_id, dsttablespace);
+
+		if (lstat(dstpath, &st) < 0 || !S_ISDIR(st.st_mode))
+		{
+			/* Assume we can ignore it */
+			pfree(dstpath);
+			continue;
+		}
+
+		if (!rmtree(dstpath, true))
+			ereport(WARNING,
+					(errmsg("some useless files may be left behind in old database directory \"%s\"",
+							dstpath)));
+
+		/* Record the filesystem change in XLOG */
+		{
+			xl_dbase_drop_rec xlrec;
+			XLogRecData rdata[1];
+
+			xlrec.db_id = db_id;
+			xlrec.tablespace_id = dsttablespace;
+
+			rdata[0].data = (char *) &xlrec;
+			rdata[0].len = sizeof(xl_dbase_drop_rec);
+			rdata[0].buffer = InvalidBuffer;
+			rdata[0].next = NULL;
+
+			(void) XLogInsert(RM_DBASE_ID, XLOG_DBASE_DROP, rdata);
+		}
+
+		pfree(dstpath);
+	}
+
+	heap_endscan(scan);
+	heap_close(rel, AccessShareLock);
+}
+
+/*
  * Check for existing files that conflict with a proposed new DB OID;
  * return TRUE if there are any
  *
@@ -2371,14 +2456,23 @@ static bool
 check_db_file_conflict(Oid db_id)
 {
 	bool		result = false;
-	cqContext  *pcqCtx;
+	Relation	rel;
+	HeapScanDesc scan;
 	HeapTuple	tuple;
+	Snapshot	snapshot;
 
-	pcqCtx = caql_beginscan(
-			NULL,
-			cql("SELECT * FROM pg_tablespace ", NULL));
+	/*
+	 * As in createdb(), we'd better use an MVCC snapshot here; missing a
+	 * tablespace could result in falsely reporting the OID is unique, with
+	 * disastrous future consequences per the comment above.
+	 *
+	 * XXX change this when a generic fix for SnapshotNow races is implemented
+	 */
+	snapshot = CopySnapshot(GetLatestSnapshot());
 
-	while (HeapTupleIsValid(tuple = caql_getnext(pcqCtx)))
+	rel = heap_open(TableSpaceRelationId, AccessShareLock);
+	scan = heap_beginscan(rel, snapshot, 0, NULL);
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Oid			dsttablespace = HeapTupleGetOid(tuple);
 		char	   *dstpath;
@@ -2401,7 +2495,8 @@ check_db_file_conflict(Oid db_id)
 		pfree(dstpath);
 	}
 
-	caql_endscan(pcqCtx);
+	heap_endscan(scan);
+	heap_close(rel, AccessShareLock);
 	return result;
 }
 

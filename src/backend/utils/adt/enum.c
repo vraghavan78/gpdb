@@ -14,7 +14,9 @@
 #include "postgres.h"
 
 #include "catalog/pg_enum.h"
+#include "catalog/pg_type.h"
 #include "fmgr.h"
+#include "libpq/pqformat.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"

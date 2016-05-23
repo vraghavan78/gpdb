@@ -4271,13 +4271,21 @@ DESCR("smaller of two");
 DATA(insert OID = 3525 (  enum_larger	PGNSP PGUID 12 1 0 f f t f i 2 3500 "3500 3500" _null_ _null_ _null_ enum_larger - _null_ _null_ ));
 DESCR("larger of two");
 DATA(insert OID = 3526 (  max			PGNSP PGUID 12 1 0 t f f f i 1 3500 "3500" _null_ _null_ _null_ aggregate_dummy - _null_ _null_ ));
+DESCR("maximum value of all enum input values");
 DATA(insert OID = 3527 (  min			PGNSP PGUID 12 1 0 t f f f i 1 3500 "3500" _null_ _null_ _null_ aggregate_dummy - _null_ _null_ ));
+DESCR("minimum value of all enum input values");
 DATA(insert OID = 3528 (  enum_first	PGNSP PGUID 12 1 0 f f f f s 1 3500 "3500" _null_ _null_ _null_ enum_first - _null_ _null_ ));
+DESCR("first value of the input enum type");
 DATA(insert OID = 3529 (  enum_last		PGNSP PGUID 12 1 0 f f f f s 1 3500 "3500" _null_ _null_ _null_ enum_last - _null_ _null_ ));
+DESCR("last value of the input enum type");
 DATA(insert OID = 3530 (  enum_range	PGNSP PGUID 12 1 0 f f f f s 2 2277 "3500 3500" _null_ _null_ _null_ enum_range_bounds - _null_ _null_ ));
+DESCR("range between the two given enum values, as an ordered array");
 DATA(insert OID = 3531 (  enum_range	PGNSP PGUID 12 1 0 f f f f s 1 2277 "3500" _null_ _null_ _null_ enum_range_all - _null_ _null_ ));
-DATA(insert OID = 3532 (  enum_recv		PGNSP PGUID 12 1 0 f f t f s 2 3500 "2275 26" _null_ _null_ _null_ enum_recv - _null_ _null_ ));
+DESCR("range of the given enum type, as an ordered array");
+DATA(insert OID = 3532 (  enum_recv		PGNSP PGUID 12 1 0 f f t f s 2 3500 "2281 26" _null_ _null_ _null_ enum_recv - _null_ _null_ ));
+DESCR("I/O");
 DATA(insert OID = 3533 (  enum_send		PGNSP PGUID 12 1 0 f f t f s 1 17	"3500" _null_ _null_ _null_ enum_send - _null_ _null_ ));
+DESCR("I/O");
 
 /* text search stuff */
 DATA(insert OID =  3610 (  tsvectorin			PGNSP PGUID 12 1 0 f f t f i 1 3614 "2275" _null_ _null_ _null_ tsvectorin - _null_ _null_ ));

@@ -592,6 +592,7 @@ PersistentBuild_BuildDb(
 	info = DatabaseInfo_Collect(
 							dbOid,
 							defaultTablespace,
+							/* snapshot */ NULL,
 							/* collectGpRelationNodeInfo */ false,
 							/* collectAppendOnlyCatalogSegmentInfo */ true,
 							/* scanFileSystem */ true);
