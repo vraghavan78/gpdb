@@ -2373,6 +2373,13 @@ have_createdb_privilege(void)
  * We don't know what tablespaces db_id is using, so iterate through all
  * tablespaces removing <tablespace>/db_id
  */
+/*
+ * GPDB_83_MERGE_FIXME: As noted in createdb_failure_callback() it's unclear
+ * why we in GPDB don't do remove_dbtablespaces(). Removing the code altogether
+ * makes for strange merge conflicts though so put back the code but blocked
+ * off with a preprocessor #if 0 until it has been investigated.
+ */
+#if 0
 static void
 remove_dbtablespaces(Oid db_id)
 {
@@ -2439,6 +2446,7 @@ remove_dbtablespaces(Oid db_id)
 	heap_endscan(scan);
 	heap_close(rel, AccessShareLock);
 }
+#endif
 
 /*
  * Check for existing files that conflict with a proposed new DB OID;
