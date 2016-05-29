@@ -28,7 +28,7 @@
 
 using std::string;
 
-#ifndef DEBUG_S3
+#ifndef S3_STANDALONE
 extern "C" {
 void write_log(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 }
@@ -44,13 +44,6 @@ bool gethttpnow(char datebuf[65]) {  //('D, d M Y H:i:s T')
     localtime_r(&t, &tm_info);
     strftime(datebuf, 65, "%a, %d %b %Y %H:%M:%S %z", &tm_info);
     return true;
-}
-
-void _tolower(char *buf) {
-    do {
-        if (*buf >= 'A' && *buf <= 'Z') *buf |= 0x60;
-    } while (*buf++);
-    return;
 }
 
 bool trim(char *out, const char *in, const char *trimed) {
@@ -268,7 +261,7 @@ uint64_t DataBuffer::append(const char *buf, uint64_t len) {
 Config::Config(const string &filename) : _conf(NULL) {
     if (filename != "") this->_conf = ini_load(filename.c_str());
     if (this->_conf == NULL) {
-#ifndef DEBUG_S3
+#ifndef S3_STANDALONE
         write_log("Failed to load config file\n");
 #endif
     }

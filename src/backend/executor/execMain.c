@@ -83,7 +83,7 @@
 
 #include "cdb/cdbappendonlyam.h"
 #include "cdb/cdbaocsam.h"
-#include "cdb/cdbdisp.h"
+#include "cdb/cdbdisp_query.h"
 #include "cdb/cdbdispatchresult.h"
 #include "cdb/cdbexplain.h"             /* cdbexplain_sendExecStats() */
 #include "cdb/cdbplan.h"
@@ -596,7 +596,7 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
 				 * On return, gangs have been allocated and CDBProcess lists have
 				 * been filled in in the slice table.)
 				 */
-				AssignGangs(queryDesc, gp_singleton_segindex);
+				AssignGangs(queryDesc);
 			}
 		}
 
@@ -6055,7 +6055,7 @@ FillSliceTable_walker(Node *node, void *context)
 			sendSlice->gangType = GANGTYPE_ENTRYDB_READER;
 
 		sendSlice->numGangMembersToBeActive =
-			sliceCalculateNumSendingProcesses(sendSlice, getgpsegmentCount());
+			sliceCalculateNumSendingProcesses(sendSlice);
 
 		MemoryContextSwitchTo(oldcxt);
 

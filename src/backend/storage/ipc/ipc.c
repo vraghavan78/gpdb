@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#include "cdb/cdbdisp.h"
+#include "cdb/cdbdisp_thread.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #ifdef PROFILE_PID_DIR

@@ -37,7 +37,7 @@
 #include "utils/resowner.h"
 #include "utils/syscache.h"
 
-#include "cdb/cdbdisp.h"
+#include "cdb/cdbdisp_query.h"
 #include "cdb/cdbdoublylinked.h"
 #include "cdb/cdbsrlz.h"
 #include "cdb/cdbvars.h"
@@ -348,8 +348,7 @@ Sequence_FetchGpRelationNodeForXLog(Relation rel)
 				 ItemPointerToString(&rel->rd_segfile0_relationnodeinfo.persistentTid));
 	}
 
-	if (Debug_check_for_invalid_persistent_tid &&
-		!Persistent_BeforePersistenceWork() &&
+	if (!Persistent_BeforePersistenceWork() &&
 		PersistentStore_IsZeroTid(&rel->rd_segfile0_relationnodeinfo.persistentTid))
 	{	
 		elog(ERROR, 

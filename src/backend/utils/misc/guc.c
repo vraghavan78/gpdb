@@ -69,7 +69,7 @@
 #include "utils/ps_status.h"
 #include "utils/tzparser.h"
 #include "utils/xml.h"
-#include "cdb/cdbdisp.h"
+#include "cdb/cdbdisp_query.h"
 #include "cdb/cdbvars.h"
 
 #ifdef USE_SSL
@@ -1352,7 +1352,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_KB | GUC_GPDB_ADDOPT
 		},
 		&work_mem,
-        32768, 2 * BLCKSZ / 1024, MAX_KILOBYTES, NULL, NULL
+        32768, 64, MAX_KILOBYTES, NULL, NULL
 	},
 
 	{

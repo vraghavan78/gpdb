@@ -56,7 +56,7 @@
 #include "cdb/cdbvars.h"
 #include "tcop/utility.h"
 
-#include "cdb/cdbdisp.h"
+#include "cdb/cdbdisp_query.h"
 #include "cdb/cdbtm.h"
 
 /*

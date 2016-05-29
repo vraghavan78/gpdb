@@ -394,8 +394,7 @@ heap_create(const char *relname,
 		}
 		
 
-		if (Debug_check_for_invalid_persistent_tid &&
-			!Persistent_BeforePersistenceWork() &&
+		if (!Persistent_BeforePersistenceWork() &&
 			PersistentStore_IsZeroTid(&rel->rd_segfile0_relationnodeinfo.persistentTid))
 		{	
 			elog(ERROR, 
@@ -1240,8 +1239,7 @@ InsertGpRelationNodeTuple(
 	bool		nulls[Natts_gp_relation_node];
 	HeapTuple	tuple;
 
-	if (Debug_check_for_invalid_persistent_tid &&
-		!Persistent_BeforePersistenceWork() &&
+	if (!Persistent_BeforePersistenceWork() &&
 		PersistentStore_IsZeroTid(persistentTid))
 	{	
 		elog(ERROR, 
@@ -1302,8 +1300,7 @@ UpdateGpRelationNodeTuple(
 	bool		repl_repl[Natts_gp_relation_node];
 	HeapTuple	newtuple;
 
-	if (Debug_check_for_invalid_persistent_tid &&
-		!Persistent_BeforePersistenceWork() &&
+	if (!Persistent_BeforePersistenceWork() &&
 		PersistentStore_IsZeroTid(persistentTid))
 	{	
 		elog(ERROR, 
@@ -2487,28 +2484,8 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, Node *expr, Oid attrdefOid)
 			cql("INSERT INTO pg_attrdef ", 
 				NULL));
 
-	elogif(Debug_check_for_invalid_persistent_tid, LOG,
-			 "StoreAttrDefault[1] relation %u/%u/%u '%s', isPresent %s, serial number " INT64_FORMAT ", TID %s",
-			 adrel->rd_node.spcNode,
-			 adrel->rd_node.dbNode,
-			 adrel->rd_node.relNode,
-			 NameStr(adrel->rd_rel->relname),
-			 (adrel->rd_segfile0_relationnodeinfo.isPresent ? "true" : "false"),
-			 adrel->rd_segfile0_relationnodeinfo.persistentSerialNum,
-			 ItemPointerToString(&adrel->rd_segfile0_relationnodeinfo.persistentTid));
-
 	// Fetch gp_persistent_relation_node information that will be added to XLOG record.
 	RelationFetchGpRelationNodeForXLog(adrel);
-
-	elogif(Debug_check_for_invalid_persistent_tid, LOG,
-			 "StoreAttrDefault[2] relation %u/%u/%u '%s', isPresent %s, serial number " INT64_FORMAT ", TID %s",
-			 adrel->rd_node.spcNode,
-			 adrel->rd_node.dbNode,
-			 adrel->rd_node.relNode,
-			 NameStr(adrel->rd_rel->relname),
-			 (adrel->rd_segfile0_relationnodeinfo.isPresent ? "true" : "false"),
-			 adrel->rd_segfile0_relationnodeinfo.persistentSerialNum,
-			 ItemPointerToString(&adrel->rd_segfile0_relationnodeinfo.persistentTid));
 
 	tuple = caql_form_tuple(adrcqCtx, values, nulls);
 
