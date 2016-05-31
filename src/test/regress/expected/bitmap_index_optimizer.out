@@ -277,7 +277,7 @@ select t from bm_test where n ISNULL;
 
 -- bitmap index builds do not support concurrent building, test for this
 create index concurrently should_not_work on bm_test using bitmap(a);
-ERROR:  CONCURRENTLY is not supported when creating bitmap indexes (bitmap.c:69)
+ERROR:  CREATE INDEX CONCURRENTLY is not supported
 -- test updates
 update bm_test set i4 = 3;
 -- should return nothing
@@ -469,11 +469,11 @@ insert into ijk values (1, NULL, NULL);
 insert into ijk values (1, NULL, NULL);
 -- should fail.
 create unique index ijk_i on ijk(i);
-ERROR:  could not create unique index "ijk_i"  (seg0 jeffsmac:11001 pid=62532)
-DETAIL:  Table contains duplicated values.
+ERROR:  could not create unique index "ijk_i"  (seg0 127.0.0.1:40000 pid=30730)
+DETAIL:  Key (i)=(1) is duplicated.
 create unique index ijk_ij on ijk(i,j);
-ERROR:  could not create unique index "ijk_ij"  (seg0 jeffsmac:11001 pid=62532)
-DETAIL:  Table contains duplicated values.
+ERROR:  could not create unique index "ijk_ij"  (seg0 127.0.0.1:40000 pid=30730)
+DETAIL:  Key (i, j)=(1, 3) is duplicated.
 -- should OK.
 create unique index ijk_ijk on ijk(i,j,k);
 set gp_enable_mk_sort=on;
@@ -487,11 +487,11 @@ insert into ijk values (1, NULL, NULL);
 insert into ijk values (1, NULL, NULL);
 -- should fail.
 create unique index ijk_i on ijk(i);
-ERROR:  could not create unique index "ijk_i"  (seg0 jeffsmac:11001 pid=62532)
-DETAIL:  Table contains duplicated values.
+ERROR:  could not create unique index "ijk_i"  (seg0 127.0.0.1:40000 pid=30730)
+DETAIL:  Key (i)=(1) is duplicated.
 create unique index ijk_ij on ijk(i,j);
-ERROR:  could not create unique index "ijk_ij"  (seg0 jeffsmac:11001 pid=62532)
-DETAIL:  Table contains duplicated values.
+ERROR:  could not create unique index "ijk_ij"  (seg0 127.0.0.1:40000 pid=30730)
+DETAIL:  Key (i, j)=(1, 3) is duplicated.
 -- should OK.
 create unique index ijk_ijk on ijk(i,j,k);
 set gp_enable_mk_sort=off;

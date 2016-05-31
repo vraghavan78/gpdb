@@ -2089,6 +2089,9 @@ ERROR:  invalid use of TABLE value expression
 SELECT sum(a) over (partition by TABLE(select * from example) order by b) from example;
 ERROR:  could not identify an ordering operator for type anytable
 HINT:  Use an explicit ordering operator or modify the query.
+LINE 1: SELECT sum(a) over (partition by TABLE(select * from example...
+        ^
+HINT:  Use an explicit ordering operator or modify the query.
 -- ERROR raised internally by user code when we don't see an output tuple
 -- that matches expectations
 SELECT * FROM multiset_4( TABLE( SELECT 1::integer, 'hello'::text) ) as tf(a int);
@@ -2169,12 +2172,12 @@ View definition:
  SELECT tf.a, tf.b
    FROM multiset_2(TABLE( SELECT example.a, example.b
            FROM example
-          SCATTER BY example.a::text || example.b, 5)) tf(a, b);
+          SCATTER BY example.a || example.b, 5)) tf(a, b);
 
 SELECT pg_get_viewdef('v2'::regclass);
-                                                               pg_get_viewdef                                                                
----------------------------------------------------------------------------------------------------------------------------------------------
- SELECT tf.a, tf.b FROM multiset_2(TABLE(SELECT example.a, example.b FROM example SCATTER BY ((example.a)::text || example.b), 5)) tf(a, b);
+                                                           pg_get_viewdef                                                            
+-------------------------------------------------------------------------------------------------------------------------------------
+ SELECT tf.a, tf.b FROM multiset_2(TABLE(SELECT example.a, example.b FROM example SCATTER BY (example.a || example.b), 5)) tf(a, b);
 (1 row)
 
 CREATE VIEW v3 AS
