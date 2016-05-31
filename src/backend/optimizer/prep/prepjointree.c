@@ -748,6 +748,8 @@ is_simple_subquery(PlannerInfo *root, Query *subquery)
 	return true;
 }
 
+
+
 /*
  * has_nullable_targetlist
  *	  Check a subquery in the range table to see if all the non-junk

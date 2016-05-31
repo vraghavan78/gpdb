@@ -6954,7 +6954,7 @@ atpxPartAddList(Relation rel,
 		} /* end for each cell */
 
 	}
-	
+
 	if (par_prule && par_prule->topRule)
 		heap_close(par_rel, NoLock);
 

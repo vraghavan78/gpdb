@@ -14,10 +14,7 @@
 #ifndef PORTALCMDS_H
 #define PORTALCMDS_H
 
-/* GPDB_83FIXME: is this #include needed? */
-#if 0
 #include "nodes/parsenodes.h"
-#endif
 #include "nodes/plannodes.h"
 #include "utils/portal.h"
 

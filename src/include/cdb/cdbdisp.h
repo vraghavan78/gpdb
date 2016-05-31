@@ -144,6 +144,6 @@ cdbdisp_makeDispatcherState(CdbDispatcherState *ds,
  * Free the PQExpBufferData allocated in libpq.
  * Free dispatcher memory context.
  */
-extern void cdbdisp_destroyDispatcherState(CdbDispatcherState *ds);
+void cdbdisp_destroyDispatcherState(CdbDispatcherState *ds);
 
 #endif   /* CDBDISP_H */

@@ -359,7 +359,7 @@ expand_targetlist(List *tlist, int command_type,
 													  sizeof(int32),
 													  (Datum) 0,
 													  true,		/* isnull */
-													  true /* byval */);
+													  true /* byval */ );
 					}
 					break;
 				case CMD_UPDATE:
@@ -379,7 +379,7 @@ expand_targetlist(List *tlist, int command_type,
 													  sizeof(int32),
 													  (Datum) 0,
 													  true,		/* isnull */
-													  true /* byval */);
+													  true /* byval */ );
 					}
 					break;
 				default:

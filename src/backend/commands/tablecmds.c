@@ -1291,7 +1291,7 @@ DefinePartitionedRelation(CreateStmt *stmt, Oid relOid)
 
 		ProcessUtility((Node *)(((Query *)pUtl)->utilityStmt),
 					   synthetic_sql,
-					   NULL, 
+					   NULL,
 					   false, /* not top level */
 					   dest,
 					   NULL);
@@ -1323,7 +1323,7 @@ EvaluateDeferredStatements(List *deferredStmts)
 		uquery = parse_analyze(dstmt, NULL, NULL, 0);
 		Insist(uquery->commandType == CMD_UTILITY);
 			
-		ereport(DEBUG1, 
+		ereport(DEBUG1,
 				(errmsg("processing deferred utility statement")));
 			
 		ProcessUtility((Node*)uquery->utilityStmt,
@@ -4861,7 +4861,7 @@ static void
 ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation *rel_p, AlterTableCmd *cmd)
 {
 	Relation rel = *rel_p;
-	
+
 	switch (cmd->subtype)
 	{
 		case AT_AddColumn:		/* ADD COLUMN */
@@ -7824,11 +7824,11 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 
 			heap_close(crel, AccessShareLock); /* already locked master */
 
-			ProcessUtility((Node *)ats, 
+			ProcessUtility((Node *)ats,
 						   synthetic_sql,
-						   NULL, 
+						   NULL,
 						   false, /* not top level */
-						   dest, 
+						   dest,
 						   NULL);
 		}
 	}
@@ -12310,11 +12310,11 @@ build_hidden_type(Form_pg_attribute att)
 
 	/* that's all that's needed for the shell! */
 	q = parse_analyze((Node *)newtype, NULL, NULL, 0);
-	ProcessUtility((Node *)q->utilityStmt, 
+	ProcessUtility((Node *)q->utilityStmt,
 				   synthetic_sql,
-				   NULL, 
+				   NULL,
 				   false, /* not top level */
-				   dest, 
+				   dest,
 				   NULL);
 	CommandCounterIncrement();
 
@@ -12324,11 +12324,11 @@ build_hidden_type(Form_pg_attribute att)
 	iofunc = build_iofunc(newname, "in", "int4in", newname);
 	inputname = copyObject(linitial(iofunc->funcname));
 	q = parse_analyze((Node *)iofunc, NULL, NULL, 0);
-	ProcessUtility((Node *)q->utilityStmt, 
+	ProcessUtility((Node *)q->utilityStmt,
 				   synthetic_sql,
-				   NULL, 
+				   NULL,
 				   false, /* not top level */
-				   dest, 
+				   dest,
 				   NULL);
 	CommandCounterIncrement();
 
@@ -12339,9 +12339,9 @@ build_hidden_type(Form_pg_attribute att)
 	q = parse_analyze((Node *)iofunc, NULL, NULL, 0);
 	ProcessUtility((Node *)q->utilityStmt,
 				   synthetic_sql,
-				   NULL, 
+				   NULL,
 				   false, /* not top level */
-				   dest, 
+				   dest,
 				   NULL);
 	CommandCounterIncrement();
 
@@ -12381,9 +12381,9 @@ build_hidden_type(Form_pg_attribute att)
 	q = parse_analyze((Node *)newtype, NULL, NULL, 0);
 	ProcessUtility((Node *)q->utilityStmt,
 				   synthetic_sql,
-				   NULL, 
+				   NULL,
 				   false, /* not top level */
-				   dest, 
+				   dest,
 				   NULL);
 	CommandCounterIncrement();
 
@@ -12692,11 +12692,11 @@ prebuild_temp_table(Relation rel, RangeVar *tmpname, List *distro, List *opts,
 			cs->tableElts = lappend(cs->tableElts, cd);
 		}
 		q = parse_analyze((Node *)cs, NULL, NULL, 0);
-		ProcessUtility((Node *)q->utilityStmt, 
+		ProcessUtility((Node *)q->utilityStmt,
 					   synthetic_sql,
-					   NULL, 
+					   NULL,
 					   false, /* not top level */
-					   dest, 
+					   dest,
 					   NULL);
 		CommandCounterIncrement();
 
@@ -12726,11 +12726,11 @@ prebuild_temp_table(Relation rel, RangeVar *tmpname, List *distro, List *opts,
 #endif
 
 			q = parse_analyze((Node *)ats, NULL, NULL, 0);
-			ProcessUtility((Node *)q->utilityStmt, 
+			ProcessUtility((Node *)q->utilityStmt,
 						   synthetic_sql,
-						   NULL, 
+						   NULL,
 						   false, /* not top level */
-						   dest, 
+						   dest,
 						   NULL);
 			CommandCounterIncrement();
 		}
@@ -13333,7 +13333,7 @@ ATExecSetDistributedBy(Relation rel, Node *node, AlterTableCmd *cmd)
 	nattr = RelationGetNumberOfAttributes(rel);
 	heap_close(rel, NoLock);
 	rel = NULL;
-   	tmprelid = RangeVarGetRelid(tmprv, false);
+	tmprelid = RangeVarGetRelid(tmprv, false);
 	swap_relation_files(tarrelid, tmprelid, RecentXmin, false);
 
 	if (DatumGetPointer(newOptions))
@@ -14249,9 +14249,9 @@ ATPExecPartDrop(Relation rel,
 
 		ProcessUtility((Node *) ds,
 					   synthetic_sql,
-					   NULL, 
+					   NULL,
 					   false, /* not top level */
-					   dest, 
+					   dest,
 					   NULL);
 
 		/* Notify of name if did not use name for partition id spec */
@@ -14980,7 +14980,7 @@ ATPExecPartRename(Relation rel,
 					   synthetic_sql,
 					   NULL,
 					   false, /* not top level */
-					   dest, 
+					   dest,
 					   NULL);
 
 		/* process children if there are any */
@@ -15001,9 +15001,9 @@ ATPExecPartRename(Relation rel,
 
 				ProcessUtility((Node *) renStmt,
 							   synthetic_sql,
-							   NULL, 
+							   NULL,
 							   false, /* not top level */
-							   dest, 
+							   dest,
 							   NULL);
 				renamed++;
 			}
@@ -15927,7 +15927,7 @@ ATPExecPartSplit(Relation *rel,
 					   synthetic_sql,
 					   NULL,
 					   false, /* not top level */
-					   dest, 
+					   dest,
 					   NULL);
 		CommandCounterIncrement();
 
@@ -15969,9 +15969,9 @@ ATPExecPartSplit(Relation *rel,
 		heap_close(*rel, NoLock);
 		ProcessUtility((Node *)q->utilityStmt,
 					   synthetic_sql,
-					   NULL, 
+					   NULL,
 					   false, /* not top level */
-					   dest, 
+					   dest,
 					   NULL);
 		*rel = heap_open(relid, AccessExclusiveLock);
 		CommandCounterIncrement();
@@ -16029,11 +16029,11 @@ ATPExecPartSplit(Relation *rel,
 		 *
 		 * Can that really happen? How do we handle that nowadays?
 		 */
-		ProcessUtility((Node *)q->utilityStmt, 
+		ProcessUtility((Node *)q->utilityStmt,
 					   synthetic_sql,
-					   NULL, 
+					   NULL,
 					   false, /* not top level */
-					   dest, 
+					   dest,
 					   NULL);
 
 		*rel = heap_open(relid, AccessExclusiveLock);
@@ -16390,11 +16390,11 @@ ATPExecPartSplit(Relation *rel,
 			q = parse_analyze((Node *)ats, NULL, NULL, 0);
 
 			heap_close(*rel, NoLock);
-			ProcessUtility((Node *)q->utilityStmt, 
+			ProcessUtility((Node *)q->utilityStmt,
 						   synthetic_sql,
-						   NULL, 
+						   NULL,
 						   false, /* not top level */
-						   dest, 
+						   dest,
 						   NULL);
 			*rel = heap_open(relid, AccessExclusiveLock);
 
@@ -16659,9 +16659,9 @@ ATPExecPartTruncate(Relation rel,
 
 		ProcessUtility( (Node *) ts,
 					   synthetic_sql,
-					   NULL, 
+					   NULL,
 					   false, /* not top level */
-					   dest, 
+					   dest,
 					   NULL);
 
 		/* Notify of name if did not use name for partition id spec */
