@@ -1317,15 +1317,15 @@ EvaluateDeferredStatements(List *deferredStmts)
 	{
 		Query	   *uquery;
 		DestReceiver *dest = None_Receiver;
-		
+
 		Node *dstmt = lfirst(lc);
-		
+
 		uquery = parse_analyze(dstmt, NULL, NULL, 0);
 		Insist(uquery->commandType == CMD_UTILITY);
-			
+
 		ereport(DEBUG1,
 				(errmsg("processing deferred utility statement")));
-			
+
 		ProcessUtility((Node*)uquery->utilityStmt,
 					   synthetic_sql,
 					   NULL,
@@ -10303,19 +10303,12 @@ ATExecSetRelOptions(Relation rel, List *defList, bool isReset)
 static void 
 copy_append_only_data(
 	RelFileNode		*oldRelFileNode,
-	
 	RelFileNode		*newRelFileNode,
-	
 	int32			segmentFileNum,
-
 	char			*relationName,
-
 	int64			eof,
-
 	ItemPointer		persistentTid,
-	
 	int64			persistentSerialNum,
-	
 	char			*buffer)
 {
 	MIRRORED_LOCK_DECLARE;
