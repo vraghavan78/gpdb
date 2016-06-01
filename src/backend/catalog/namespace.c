@@ -251,8 +251,7 @@ RangeVarGetRelid(const RangeVar *relation, bool failOK)
 	 */
 	if (relation->istemp)
 	{
-		if (relation->schemaname &&
-			(!TempNamespaceValid(false) || strcmp(relation->schemaname, get_namespace_name(myTempNamespace)) != 0))
+		if (relation->schemaname)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				   errmsg("temporary tables cannot specify a schema name")));
