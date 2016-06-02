@@ -1107,7 +1107,6 @@ _readRangeTblEntry(void)
 	READ_OID_FIELD(checkAsUser);
 
 	READ_BOOL_FIELD(forceDistRandom);
-	READ_NODE_FIELD(pseudocols);
 
 	READ_DONE();
 }
