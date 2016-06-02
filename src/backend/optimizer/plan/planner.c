@@ -180,7 +180,7 @@ static void postprocess_plan(PlannedStmt *plan)
 	globNew->paramlist = NIL;
 	globNew->subrtables = NIL;
 	globNew->rewindPlanIDs = NULL;
-	globNew->finalrtable = NIL;
+	globNew->finalrtable = plan->rtable;
 	globNew->relationOids = NIL;
 	globNew->invalItems = NIL;
 	globNew->transientPlan = false;
@@ -200,6 +200,8 @@ static void postprocess_plan(PlannedStmt *plan)
 		lfirst(lp) = replace_shareinput_targetlists(globNew, subplan);
 	}
 	plan->planTree = replace_shareinput_targetlists(globNew, plan->planTree);
+	/* replace_shareinput_targetlists() adds entries to finalrtable */
+	plan->rtable = globNew->finalrtable;
 }
 #endif
 
