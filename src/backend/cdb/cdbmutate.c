@@ -1959,6 +1959,10 @@ static bool shareinput_mutator_dag_to_tree(Node *node, PlannerGlobal *glob, bool
 		Assert(plan->righttree == NULL);
 		Assert(plan->initPlan == NULL);
 
+		/*
+		 * Before we zap the child, fill in information about the child's
+		 * targetlist, so that we can still EXPLAIN this correctly.
+		 */
 		attno = 1;
 		foreach(lc, subplan->targetlist)
 		{
@@ -1973,7 +1977,6 @@ static bool shareinput_mutator_dag_to_tree(Node *node, PlannerGlobal *glob, bool
 			vartypmod = exprTypmod((Node *) tle->expr);
 
 			siscan->colnames = lappend(siscan->colnames, get_tle_name(tle, ctxt->curr_rtable, buf));
-
 			siscan->coltypes = lappend_oid(siscan->coltypes, vartype);
 			siscan->coltypmods = lappend_int(siscan->coltypmods, vartypmod);
 			attno++;
