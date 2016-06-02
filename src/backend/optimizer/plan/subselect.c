@@ -632,13 +632,26 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable,
 	/*
 	 * Add the subplan and its rtable to the global lists.
 	 */
-	root->glob->subplans = lappend(root->glob->subplans, plan);
-	root->glob->subrtables = lappend(root->glob->subrtables, rtable);
+	root->glob->subplans = lappend(root->glob->subplans,
+								   plan);
+	root->glob->subrtables = lappend(root->glob->subrtables,
+									 rtable);
 	splan->plan_id = list_length(root->glob->subplans);
 
 	if (splan->is_initplan)
 		root->init_plans = lappend(root->init_plans, splan);
-	
+
+	/*
+	 * A parameterless subplan (not initplan) should be prepared to handle
+	 * REWIND efficiently.	If it has direct parameters then there's no point
+	 * since it'll be reset on each scan anyway; and if it's an initplan then
+	 * there's no point since it won't get re-run without parameter changes
+	 * anyway.	The input of a hashed subplan doesn't need REWIND either.
+	 */
+	if (splan->parParam == NIL && !splan->is_initplan && !splan->useHashTable)
+		root->glob->rewindPlanIDs = bms_add_member(root->glob->rewindPlanIDs,
+												   splan->plan_id);
+
 	/* Label the subplan for EXPLAIN purposes */
 	if (splan->is_initplan)
 	{
