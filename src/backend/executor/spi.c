@@ -1709,14 +1709,18 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 		stmt_list = pg_analyze_and_rewrite(copyObject(parsetree),
 										   src, argtypes, nargs);
 		{
-			ListCell *lc = NULL;
+			ListCell *lc;
+
 			foreach (lc, stmt_list)
 			{
 				Query *query = (Query *) lfirst(lc);
-			
+
 				if (Gp_role == GP_ROLE_EXECUTE)
 				{
-					/* This method will error out if the query cannot be safely executed on segment */
+					/*
+					 * This method will error out if the query cannot be
+					 * safely executed on segment.
+					 */
 					querytree_safe_for_segment(query);
 				}
 			}
@@ -1904,12 +1908,12 @@ _SPI_execute_plan(_SPI_plan * plan, ParamListInfo paramLI,
                     		&& log_min_messages < DEBUG4)
                     {
                     	/* For log level of DEBUG4, gpmon is sent information about SPI internal queries as well */
-                    	Assert(plansource->query_string);
-            			gpmon_qlog_query_text(qdesc->gpmon_pkt,
-            					plansource->query_string,
-            					application_name,
-            					NULL /* resqueue name*/,
-            					NULL /* priority */);
+						Assert(plansource->query_string);
+						gpmon_qlog_query_text(qdesc->gpmon_pkt,
+											  plansource->query_string,
+											  application_name,
+											  NULL /* resqueue name */,
+											  NULL /* priority */);
                     }
                     else
                     {

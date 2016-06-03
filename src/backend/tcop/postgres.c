@@ -1455,9 +1455,9 @@ exec_mpp_query(const char *query_string,
      */
     if (serializedQueryDispatchDesc != NULL && serializedQueryDispatchDesclen > 0)
     {
-    	ddesc = (QueryDispatchDesc *) deserializeNode(serializedQueryDispatchDesc,serializedQueryDispatchDesclen);
+		ddesc = (QueryDispatchDesc *) deserializeNode(serializedQueryDispatchDesc,serializedQueryDispatchDesclen);
 		if (!ddesc || !IsA(ddesc, QueryDispatchDesc))
-			elog(ERROR, "MPPEXEC: receive invalid QueryDispatchDesc with planned statement");
+			elog(ERROR, "MPPEXEC: received invalid QueryDispatchDesc with planned statement");
 
         sliceTable = ddesc->sliceTable;
 

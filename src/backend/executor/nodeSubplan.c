@@ -727,18 +727,18 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 				ParamListInfo paramInfo = estate->es_param_list_info;
 				ParamExternData *prmExt = NULL;
 				int extParamIndex = -1;
-				
+
 				Assert(paramInfo);
 				Assert(paramInfo->numParams > 0);
 
-				/* 
+				/*
 				 * To locate the value of this pre-evaluated parameter, we need to find
-				 * its location in the external parameter list.  
+				 * its location in the external parameter list.
 				 */
 				extParamIndex = paramInfo->numParams - estate->es_plannedstmt->nParamExec + paramid;
 
 				prmExt = &paramInfo->params[extParamIndex];
-								
+
 				/* Make sure the types are valid */
 				if (!OidIsValid(prmExt->ptype))
 				{

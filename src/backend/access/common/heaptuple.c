@@ -1198,7 +1198,7 @@ heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
 		/* Ignore attributes with dropped types */
 		if (thisatt->attlen == -1 && !thisatt->attisdropped)
 		{
-			Assert(VARATT_IS_SHORT(DatumGetPointer(values[attnum])) || 
+			Assert(VARATT_IS_SHORT(DatumGetPointer(values[attnum])) ||
 				   !VARATT_CAN_MAKE_SHORT(DatumGetPointer(values[attnum])) ||
 				   thisatt->atttypid == OIDVECTOROID ||
 				   thisatt->atttypid == INT2VECTOROID ||

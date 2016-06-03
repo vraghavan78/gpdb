@@ -2,7 +2,7 @@
  * GPDB_83_MERGE_FIXME: I left out gpmon counter stuff like this:
  *
  * Gpmon_M_Incr(GpmonPktFromMergeJoinState(node), GPMON_MERGEJOIN_OUTERTUPLE);
- * Gpmon_M_Incr(GpmonPktFromMergeJoinState(node), GPMON_QEXEC_M_ROWSIN); 
+ * Gpmon_M_Incr(GpmonPktFromMergeJoinState(node), GPMON_QEXEC_M_ROWSIN);
  *
  * Do we really need that stuff? There are counters in the inner and outer nodes themselves.
  */
@@ -990,7 +990,7 @@ ExecMergeJoin(MergeJoinState *node)
 						if (((MergeJoin*)node->js.ps.plan)->unique_outer)
 						{
 							ExecEagerFreeMergeJoin(node);
-							
+
 							/* we are done */
 							return NULL;
 						}

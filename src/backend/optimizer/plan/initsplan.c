@@ -1212,7 +1212,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	distribute_restrictinfo_to_rels(root, restrictinfo);
 
 	/*
-	 * The predicate propagation code (gen_implied_quals())  might be able to
+	 * The predicate propagation code (gen_implied_quals()) might be able to
 	 * derive other clauses from this, though, so remember this qual for later.
 	 * (We cannot do predicate propagation yet, because we haven't built all
 	 * the equivalence classes yet.)

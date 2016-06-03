@@ -1487,7 +1487,7 @@ InitializeResultRelations(PlannedStmt *plannedstmt, EState *estate, CmdType oper
 			{
 				resultRelation = CdbOpenRelation(resultRelationOid,
 													 lockmode,
-													 false, /* noWait */ 
+													 false, /* noWait */
 													 NULL); /* lockUpgraded */
 			}
 			else
@@ -5023,15 +5023,15 @@ OpenIntoRel(QueryDesc *queryDesc)
 	 * CommandCounterIncrement(), so that the new tables will be visible for
 	 * insertion.
 	 */
-	AlterTableCreateToastTableWithOid(intoRelationId, 
+	AlterTableCreateToastTableWithOid(intoRelationId,
 									  intoOidInfo->toastOid,
 									  intoOidInfo->toastIndexOid,
 									  &intoOidInfo->toastComptypeOid,
 									  false);
-	AlterTableCreateAoSegTableWithOid(intoRelationId, 
-									  intoOidInfo->aosegOid, 
+	AlterTableCreateAoSegTableWithOid(intoRelationId,
+									  intoOidInfo->aosegOid,
 									  intoOidInfo->aosegIndexOid,
-									  &intoOidInfo->aosegComptypeOid, 
+									  &intoOidInfo->aosegComptypeOid,
 									  false);
 	AlterTableCreateAoVisimapTableWithOid(intoRelationId,
 									  intoOidInfo->aovisimapOid,
@@ -6085,10 +6085,11 @@ FillSliceTable_walker(Node *node, void *context)
 /*
  * Set up the parent-child relationships in the slice table.
  *
- * We used to do this as part of ExecInitMotion(), but because ExecInitNode() no longer
- * recurses into subplans, at SubPlan nodes, we cannot easily track the parent-child slice
- * relationships across SubPlan nodes at that phase anymore. We now do this separate walk
- * of the whole plantree, recusring into SubPlan nodes, to do the same.
+ * We used to do this as part of ExecInitMotion(), but because ExecInitNode()
+ * no longer recurses into subplans, at SubPlan nodes, we cannot easily track
+ * the parent-child slice relationships across SubPlan nodes at that phase
+ * anymore. We now do this separate walk of the whole plantree, recursing
+ * into SubPlan nodes, to do the same.
  */
 static void
 FillSliceTable(EState *estate, PlannedStmt *stmt)
@@ -6099,6 +6100,9 @@ FillSliceTable(EState *estate, PlannedStmt *stmt)
 	cxt.estate = estate;
 	cxt.currentSliceId = 0;
 
-	/* NOTE: We depend on plan_tree_walker() to recurse into subplans of SubPlan nodes. */
+	/*
+	 * NOTE: We depend on plan_tree_walker() to recurse into subplans of
+	 * SubPlan nodes.
+	 */
 	FillSliceTable_walker((Node *) stmt->planTree, &cxt);
 }
