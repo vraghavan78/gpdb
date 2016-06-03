@@ -1457,8 +1457,14 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params)
 			break;
 
 		case T_TableFunctionScan:
-			finalize_primnode(((TableFunctionScan *) plan)->funcexpr,
-							  &context);
+			{
+				RangeTblEntry *rte;
+
+				rte = rt_fetch(((TableFunctionScan *) plan)->scan.scanrelid,
+							   root->parse->rtable);
+				Assert(rte->rtekind == RTE_TABLEFUNCTION);
+				finalize_primnode(rte->funcexpr, &context);
+			}
 			/* TableFunctionScan's lefttree is like SubqueryScan's subplan. */
 			context.paramids = bms_add_members(context.paramids,
 								 plan->lefttree->extParam);
