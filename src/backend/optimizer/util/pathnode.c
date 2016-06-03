@@ -520,7 +520,7 @@ cdb_set_cheapest_dedup(PlannerInfo *root, RelOptInfo *rel)
 	 * deteriorated plans observed but it must be revisited before release of
 	 * course.
 	 */
-    if (dedup->join_unique_ininfo && dedup->join_unique_ininfo->sub_targetlist)
+    if (dedup->join_unique_ininfo)
     {
     	Assert(dedup->join_unique_ininfo->sub_targetlist);
     	/* Top off the subpath with DISTINCT ON the result columns. */

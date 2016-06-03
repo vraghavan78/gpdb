@@ -913,6 +913,9 @@ convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink)
 	Query	   *parse = root->parse;
 	Query	   *subselect = (Query *) sublink->subselect;
 	List	   *in_operators;
+	List	   *left_exprs = NIL;
+	List	   *right_exprs = NIL;
+	Relids		left_varnos;
 	int			rtindex;
 	RangeTblEntry *rte;
 	RangeTblRef *rtr;
@@ -921,18 +924,18 @@ convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink)
 	bool		correlated;
 	Node	   *result;
 
-    Assert(IsA(subselect, Query));
+	Assert(IsA(subselect, Query));
 
-    cdbsubselect_drop_orderby(subselect);
-    cdbsubselect_drop_distinct(subselect);
+	cdbsubselect_drop_orderby(subselect);
+	cdbsubselect_drop_distinct(subselect);
 
 	/*
 	 * The combining operators and left-hand expressions mustn't be volatile.
 	 */
 	if (contain_volatile_functions(sublink->testexpr))
-		return (Node *)sublink;
+		return (Node *) sublink;
 
-	/**
+	/*
 	 * If subquery returns a set-returning function (SRF) in the targetlist, we
 	 * do not attempt to convert the IN to a join.
 	 */
@@ -940,32 +943,32 @@ convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink)
 	if (expression_returns_set((Node *) subselect->targetList))
 		return (Node *) sublink;
 
-	/**
+	/*
 	 * If deeply correlated, then don't pull it up
 	 */
 	if (IsSubqueryMultiLevelCorrelated(subselect))
 		return (Node *) sublink;
 
-	/**
-	 * If there are CTEs, then the transformation does not work. Don't attempt to pullup.
+	/*
+	 * If there are CTEs, then the transformation does not work. Don't attempt
+	 * to pullup.
 	 */
 	if (parse->cteList)
 		return (Node *) sublink;
 
-    /*
-     * If uncorrelated, and no Var nodes on lhs, the subquery will be executed
-     * only once.  It should become an InitPlan, but make_subplan() doesn't
-     * handle that case, so just flatten it for now.
-     * CDB TODO: Let it become an InitPlan, so its QEs can be recycled.
-     */
+	/*
+	 * If uncorrelated, and no Var nodes on lhs, the subquery will be executed
+	 * only once.  It should become an InitPlan, but make_subplan() doesn't
+	 * handle that case, so just flatten it for now.
+	 * CDB TODO: Let it become an InitPlan, so its QEs can be recycled.
+	 */
     correlated = contain_vars_of_level_or_above(sublink->subselect, 1);
 
     if (correlated)
     {
-    	/**
-    	 * Under certain conditions, we do cannot pull up the subquery as a join.
-    	 */
-
+		/*
+		 * Under certain conditions, we cannot pull up the subquery as a join.
+		 */
     	if (subselect->hasAggs
     			|| (subselect->jointree->fromlist == NULL)
     			|| subselect->havingQual
@@ -975,17 +978,15 @@ convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink)
     			|| subselect->setOperations)
     		return (Node *) sublink;
     	
-    	/* do not pull subqueries with correlation in a func expr in the 
-    	   from clause of the subselect */
+		/*
+		 * Do not pull subqueries with correlation in a func expr in the from
+		 * clause of the subselect
+		 */
     	if (has_correlation_in_funcexpr_rte(subselect->rtable))
-    	{
     		return (Node *) sublink;
-    	}
 
     	if (contain_subplans(subselect->jointree->quals))
-    	{
     		return (Node *) sublink;
-    	}
     }
 
 	/*
@@ -1005,66 +1006,11 @@ convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink)
 	rtr = makeNode(RangeTblRef);
 	rtr->rtindex = rtindex;
 
-    /* Tell caller to augment the jointree with a reference to the new RTE. */
+	/* Tell caller to augment the jointree with a reference to the new RTE. */
 	*rtrlist_inout = lappend(*rtrlist_inout, rtr);
 
 	/*
-	 * Now build the InClauseInfo node.
-	 */
-	ininfo = makeNode(InClauseInfo);
-    ininfo->sub_targetlist = NULL;
-	ininfo->righthand = bms_make_singleton(rtindex);
-
-    /*
-     * Uncorrelated "=ANY" subqueries can use JOIN_UNIQUE dedup technique.  We
-	 * expect that the test expression will be either a single OpExpr, or an
-	 * AND-clause containing OpExprs.  (If it's anything else then the parser
-	 * must have determined that the operators have non-equality-like
-	 * semantics.  In the OpExpr case we can't be sure what the operator's
-	 * semantics are like, and must check for ourselves.)
-     */
-    ininfo->try_join_unique = false;
-	in_operators = NIL;
-	if (!correlated &&
-        sublink->testexpr)
-    {
-		ininfo->try_join_unique = true;
-        if (IsA(sublink->testexpr, OpExpr))
-	    {
-			Oid			opno = ((OpExpr *) sublink->testexpr)->opno;
-		    List	   *opfamilies;
-		    List	   *opstrats;
-
-		    get_op_btree_interpretation(opno, &opfamilies, &opstrats);
-		    if (!list_member_int(opstrats, ROWCOMPARE_EQ))
-			    ininfo->try_join_unique = false;
-			in_operators = list_make1_oid(opno);
-	    }
-		else if (and_clause(sublink->testexpr))
-		{
-			ListCell   *lc;
-
-			/* OK, but we need to extract the per-column operator OIDs */
-			in_operators = NIL;
-			foreach(lc, ((BoolExpr *) sublink->testexpr)->args)
-			{
-				OpExpr *op = (OpExpr *) lfirst(lc);
-
-				if (!IsA(op, OpExpr))           /* probably shouldn't happen */
-					ininfo->try_join_unique = false;
-				in_operators = lappend_oid(in_operators, op->opno);
-			}
-        }
-		else
-			ininfo->try_join_unique = false;
-    }
-
-	ininfo->in_operators = in_operators;
-
-	/*
-	 * Build the result qual expression.  As a side effect,
-	 * ininfo->sub_targetlist is filled with a list of Vars representing the
-	 * subselect outputs.
+	 * Build the result qual expression.
 	 */
 	subquery_vars = generate_subquery_vars(root,
 										   subselect->targetList,
@@ -1072,6 +1018,93 @@ convert_IN_to_join(PlannerInfo *root, List **rtrlist_inout, SubLink *sublink)
 	result = convert_testexpr(root,
 							  sublink->testexpr,
 							  subquery_vars);
+
+	/*
+	 * Now build the InClauseInfo node.
+	 */
+	ininfo = makeNode(InClauseInfo);
+	ininfo->sub_targetlist = NULL;
+	ininfo->righthand = bms_make_singleton(rtindex);
+
+	/*
+	 * Uncorrelated "=ANY" subqueries can use JOIN_UNIQUE dedup technique.  We
+	 * expect that the test expression will be either a single OpExpr, or an
+	 * AND-clause containing OpExprs.  (If it's anything else then the parser
+	 * must have determined that the operators have non-equality-like
+	 * semantics.  In the OpExpr case we can't be sure what the operator's
+	 * semantics are like, and must check for ourselves.)
+	 */
+	ininfo->try_join_unique = false;
+	in_operators = NIL;
+	if (!correlated && sublink->testexpr)
+	{
+		ininfo->try_join_unique = true;
+		if (IsA(sublink->testexpr, OpExpr))
+	    {
+			OpExpr 	   *op = (OpExpr *) sublink->testexpr;
+			Oid			opno = op->opno;
+		    List	   *opfamilies;
+		    List	   *opstrats;
+
+		    get_op_btree_interpretation(opno, &opfamilies, &opstrats);
+		    if (!list_member_int(opstrats, ROWCOMPARE_EQ))
+			    ininfo->try_join_unique = false;
+			if (list_length(op->args) != 2)
+				return (Node *) sublink;
+			else
+			{
+				left_exprs = list_make1(linitial(op->args));
+				right_exprs = list_make1(lsecond(op->args));
+			}
+			in_operators = list_make1_oid(opno);
+	    }
+		else if (and_clause(sublink->testexpr))
+		{
+			ListCell   *lc;
+
+			/* OK, but we need to extract the per-column operator OIDs */
+			in_operators = left_exprs = right_exprs = NIL;
+			foreach(lc, ((BoolExpr *) sublink->testexpr)->args)
+			{
+				OpExpr *op = (OpExpr *) lfirst(lc);
+
+				if (!IsA(op, OpExpr))           /* probably shouldn't happen */
+					ininfo->try_join_unique = false;
+				if (list_length(op->args) != 2)
+					return (Node *) sublink;
+				else
+				{
+					left_exprs = lappend(left_exprs, linitial(op->args));
+					right_exprs = lappend(right_exprs, lsecond(op->args));
+				}
+				in_operators = lappend_oid(in_operators, op->opno);
+			}
+		}
+		else
+			ininfo->try_join_unique = false;
+    }
+
+	ininfo->in_operators = in_operators;
+
+	/*
+	 * The left-hand expressions must contain some Vars of the current query,
+	 * else it's not gonna be a join.
+	 */
+	left_varnos = pull_varnos((Node *) left_exprs);
+	ininfo->lefthand = left_varnos;
+
+	/*
+	 * ininfo->sub_targetlist must be filled with a list of expressions that
+	 * would need to be unique-ified if we try to implement the IN using a
+	 * regular join to unique-ified subquery output.  This is most easily done
+	 * by applying convert_testexpr to just the RHS inputs of the testexpr
+	 * operators.  That handles cases like type coercions of the subquery
+	 * outputs, clauses dropped due to const-simplification, etc.
+	 */
+	ininfo->sub_targetlist = (List *) convert_testexpr(root,
+													   (Node *) right_exprs,
+													   subquery_vars);
+
 
 	/* Add the completed node to the query's list */
 	root->in_info_list = lappend(root->in_info_list, ininfo);
