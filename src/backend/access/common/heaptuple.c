@@ -971,7 +971,6 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	 */
 	tuple->t_len = len;
 	ItemPointerSetInvalid(&(tuple->t_self));
-	// tuple->t_tableOid = InvalidOid; /* GPDB_83MERGE_FIXME */
 
 	HeapTupleHeaderSetDatumLength(td, len);
 	HeapTupleHeaderSetTypeId(td, tupleDescriptor->tdtypeid);
@@ -1643,7 +1642,6 @@ heap_tuple_from_minimal_tuple(MinimalTuple mtup)
 	result = (HeapTuple) palloc(HEAPTUPLESIZE + len);
 	result->t_len = len;
 	ItemPointerSetInvalid(&(result->t_self));
-	// result->t_tableOid = InvalidOid; /* GPDB_83MERGE_FIXME */
 	result->t_data = (HeapTupleHeader) ((char *) result + HEAPTUPLESIZE);
 	memcpy((char *) result->t_data + MINIMAL_TUPLE_OFFSET, mtup, mtup->t_len);
 	memset(result->t_data, 0, offsetof(HeapTupleHeaderData, t_infomask2));

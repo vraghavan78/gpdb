@@ -638,8 +638,6 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		ItemPointerSet(&firsttup.t_self,
 					   BufferGetBlockNumber(buffer),
 					   redirect_target);
-		/* GPDB_MERGE83_FIXME: We need to set tts_tableOid in the TupleTableSlot here */
-		// firsttup.t_tableOid = RelationGetRelid(relation);
 		CacheInvalidateHeapTuple(relation, &firsttup);
 	}
 

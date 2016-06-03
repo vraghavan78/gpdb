@@ -1033,8 +1033,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 			result_tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + new_tuple_len);
 			result_tuple->t_len = new_tuple_len;
 			result_tuple->t_self = newtup->t_self;
-			/* GPDB_MERGE83_FIXME: need tts_tableOid in the slot here */
-			/* result_tuple->t_tableOid = newtup->t_tableOid; */
 			new_data = (HeapTupleHeader) ((char *) result_tuple + HEAPTUPLESIZE);
 			result_tuple->t_data = new_data;
 
@@ -1139,8 +1137,6 @@ toast_flatten_tuple(HeapTuple tup, TupleDesc tupleDesc)
 		HeapTupleSetOid(new_tuple, HeapTupleGetOid(tup));
 
 	new_tuple->t_self = tup->t_self;
-	/* GPDB_MERGE83_FIXME: need tts_tableOid from the slot here */
-	/* new_tuple->t_tableOid = tup->t_tableOid; */
 
 	new_tuple->t_data->t_choice = tup->t_data->t_choice;
 	new_tuple->t_data->t_ctid = tup->t_data->t_ctid;

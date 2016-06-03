@@ -569,8 +569,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 			heapTuple->t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 			heapTuple->t_len = ItemIdGetLength(lp);
 			ItemPointerSetOffsetNumber(tid, offnum);
-			/* GPDB_MERGE83_FIXME: Need to set the tts_tableOid in the slot here */
-			//heapTuple->t_tableOid = RelationGetRelid(scan->heapRelation);
 			ctid = &heapTuple->t_data->t_ctid;
 
 			/*
