@@ -273,8 +273,6 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("prepared statement is not a SELECT")));
 		pstmt->intoClause = copyObject(stmt->into);
-		if (pstmt->intoPolicy == NULL)
-			pstmt->intoPolicy = GpPolicyCopy(CurrentMemoryContext, pstmt->intoPolicy);
 
 		MemoryContextSwitchTo(oldContext);
 
@@ -729,8 +727,6 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 				pstmt = copyObject(pstmt);
 
 				pstmt->intoClause = execstmt->into;
-				if (pstmt->intoPolicy == NULL)
-					pstmt->intoPolicy = GpPolicyCopy(CurrentMemoryContext, pstmt->intoPolicy);
 			}
 
 			ExplainOnePlan(pstmt, paramLI, stmt, queryString, tstate);
