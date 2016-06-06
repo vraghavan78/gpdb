@@ -155,7 +155,8 @@ typedef struct PortalData
 
 	/* If not NULL, Executor is active; call ExecutorEnd eventually: */
 	QueryDesc  *queryDesc;		/* info needed for executor invocation */
-	QueryDispatchDesc *ddesc;
+
+	QueryDispatchDesc *ddesc;	/* extra info dispatched from QD to QEs */
 
 	/* If portal returns tuples, this is their tupdesc: */
 	TupleDesc	tupDesc;		/* descriptor for result tuples */

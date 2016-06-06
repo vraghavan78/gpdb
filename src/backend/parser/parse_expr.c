@@ -122,19 +122,12 @@ Node *
 transformExpr(ParseState *pstate, Node *expr)
 {
 	Node	   *result = NULL;
-	ParseStateBreadCrumb savebreadcrumb;
 
 	if (expr == NULL)
 		return NULL;
 
 	/* Guard against stack overflow due to overly complex expressions */
 	check_stack_depth();
-
-	/* CDB: Drop a breadcrumb, then push location stack. Must pop before return! */
-	Assert(pstate);
-	pstate->p_breadcrumb.node = (Node *) expr;
-	savebreadcrumb = pstate->p_breadcrumb;
-	pstate->p_breadcrumb.pop = &savebreadcrumb;
 
 	switch (nodeTag(expr))
 	{
@@ -434,10 +427,6 @@ transformExpr(ParseState *pstate, Node *expr)
 			break;
 	}
 
-	/* CDB: Pop error location stack, leaving breadcrumb on our input expr. */
-	Assert(pstate->p_breadcrumb.pop == &savebreadcrumb);
-	pstate->p_breadcrumb = savebreadcrumb;
-
 	return result;
 }
 
@@ -625,12 +614,6 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 	Node	   *result = basenode;
 	List	   *subscripts = NIL;
 	ListCell   *i;
-	ParseStateBreadCrumb    savebreadcrumb;
-
-	/* CDB: Push error location stack.  Must pop before return! */
-	Assert(pstate);
-	savebreadcrumb = pstate->p_breadcrumb;
-	pstate->p_breadcrumb.pop = &savebreadcrumb;
 
 	/*
 	 * We have to split any field-selection operations apart from
@@ -675,10 +658,6 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 												   subscripts,
 												   NULL);
 
-	/* CDB: Pop error location stack. */
-	Assert(pstate->p_breadcrumb.pop == &savebreadcrumb);
-	pstate->p_breadcrumb = savebreadcrumb;
-
 	return result;
 }
 
@@ -688,13 +667,6 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 	int			numnames = list_length(cref->fields);
 	Node	   *node;
 	int			levels_up;
-	ParseStateBreadCrumb    savebreadcrumb;
-
-	/* CDB: Push error location stack.  Must pop before return! */
-	Assert(pstate);
-	savebreadcrumb = pstate->p_breadcrumb;
-	pstate->p_breadcrumb.pop = &savebreadcrumb;
-	pstate->p_breadcrumb.node = (Node *)cref;
 
 	/*----------
 	 * The allowed syntaxes are:
@@ -881,10 +853,6 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			break;
 	}
 
-	/* CDB: Pop error location stack. */
-	Assert(pstate->p_breadcrumb.pop == &savebreadcrumb);
-	pstate->p_breadcrumb = savebreadcrumb;
-
 	return node;
 }
 
@@ -1029,9 +997,6 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 		Assert(IsA(lexpr, RowExpr));
 		Assert(IsA(rexpr, RowExpr));
 
-		/* CDB: Drop a breadcrumb in case of error. */
-		pstate->p_breadcrumb.node = (Node *)a;
-
 		result = make_row_comparison_op(pstate,
 										a->name,
 										((RowExpr *) lexpr)->args,
@@ -1043,9 +1008,6 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 		/* Ordinary scalar operator */
 		lexpr = transformExpr(pstate, lexpr);
 		rexpr = transformExpr(pstate, rexpr);
-
-		/* CDB: Drop a breadcrumb in case of error. */
-		pstate->p_breadcrumb.node = (Node *)a;
 
 		result = (Node *) make_op(pstate,
 								  a->name,
@@ -1258,9 +1220,6 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 		}
 	}
 
-	/* CDB: Drop a breadcrumb in case of error. */
-	pstate->p_breadcrumb.node = (Node *)a;
-
 	/*
 	 * ScalarArrayOpExpr is only going to be useful if there's more than
 	 * one non-Var righthand item.  Also, it won't work for RowExprs.
@@ -1375,9 +1334,6 @@ transformFuncCall(ParseState *pstate, FuncCall *fn)
 		targs = lappend(targs, transformExpr(pstate,
 											 (Node *) lfirst(args)));
 	}
-
-	/* CDB: Drop a breadcrumb in case of error. */
-	pstate->p_breadcrumb.node = (Node *)fn;
     
 	return ParseFuncOrColumn(pstate,
 							 fn->funcname,
@@ -1494,7 +1450,6 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 						 errmsg("syntax error at or near \"NOT\""),
 						 errhint("Missing <operand> for \"CASE <operand> WHEN IS NOT DISTINCT FROM ...\""),
 						 parser_errposition(pstate, exprLocation((Node *) warg))));
-
 		}
 		neww->expr = (Expr *) transformExpr(pstate, warg);
 
@@ -1528,9 +1483,6 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 	 * seems a little bogus to me --- tgl
 	 */
 	typeids = lcons_oid(exprType((Node *) newc->defresult), typeids);
-
-	/* CDB: Drop a breadcrumb in case of error. */
-	pstate->p_breadcrumb.node = (Node *)c;
 
 	ptype = select_common_type(typeids, "CASE");
 	Assert(OidIsValid(ptype));
@@ -1665,9 +1617,6 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			right_list = lappend(right_list, param);
 		}
 
-		/* CDB: Drop a breadcrumb in case of error. */
-		pstate->p_breadcrumb.node = (Node *)sublink;
-
 		/*
 		 * We could rely on make_row_comparison_op to complain if the list
 		 * lengths differ, but we prefer to generate a more specific error
@@ -1753,9 +1702,6 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 		typeids = lappend_oid(typeids, newe_type);
 	}
 
-	/* CDB: Drop a breadcrumb in case of error. */
-	pstate->p_breadcrumb.node = (Node *)a;
-
 	/*
 	 * Select a target type for the elements.
 	 *
@@ -1800,8 +1746,8 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
 						 errmsg("could not find array type for data type %s",
-								format_type_be(element_type))));
-
+								format_type_be(element_type)),
+						 parser_errposition(pstate, a->location)));
 		}
 		coerce_hard = false;
 	}
@@ -1849,6 +1795,7 @@ transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 	newa->array_typeid = array_type;
 	newa->element_typeid = element_type;
 	newa->elements = newcoercedelems;
+	newa->location = a->location;
 
 	return (Node *) newa;
 }
@@ -1870,6 +1817,7 @@ transformRowExpr(ParseState *pstate, RowExpr *r)
 	/* Barring later casting, we consider the type RECORD */
 	newr->row_typeid = RECORDOID;
 	newr->row_format = COERCE_IMPLICIT_CAST;
+	newr->location = r->location;
 
 	return (Node *) newr;
 }
@@ -2514,12 +2462,17 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 	/*
 	 * Percentile functions support only one sort key.
 	 */
-	if (list_length(p->sortClause) != 1)
+	if (p->sortClause == NIL)
+	{
+		/* grammar doesn't allow this, but check to be safe */
+		elog(ERROR, "percentile function must contain ORDER BY");
+	}
+	if (list_length(p->sortClause) > 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("function \"%s\" cannot accept more than one expression in ORDER BY",
 						percentileFuncString(p, &argtype, 1, NULL, 0)),
-				 parser_errposition(pstate, exprLocation((Node *) p->sortClause))));
+				 parser_errposition(pstate, exprLocation(lsecond(p->sortClause)))));
 
 	p->args = list_make1(arg);
 
@@ -2617,7 +2570,7 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 						percentileFuncString(p, &argtype, 1, sorttypes, sortlen)),
 					 errhint("No function matches the given name and argument types. "
 							 "You might need to add explicit type casts."),
-						 parser_errposition(pstate, p->location)));
+					 parser_errposition(pstate, p->location)));
 		}
 
 		p->perctype = candidates->args[0];
@@ -2678,23 +2631,24 @@ transformPercentileExpr(ParseState *pstate, PercentileExpr *p)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("percentile functions cannot reference columns from outer queries"),
-					 parser_errposition(pstate, p->location)));
-
+					 parser_errposition(pstate,
+										locate_var_of_level((Node *) p->sortTargets, min_varlevel))));
 		if (checkExprHasAggs((Node *) p->sortTargets))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
 					 errmsg("argument of percentile function must not contain aggregates"),
-					 parser_errposition(pstate, p->location)));
+					 parser_errposition(pstate,
+										locate_agg_of_level((Node *) p->sortTargets, 0))));
 		if (checkExprHasWindFuncs((Node *) p->sortTargets))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
 					 errmsg("argument of percentile function must not contain window functions"),
-					 parser_errposition(pstate, p->location)));
+					 parser_errposition(pstate, exprLocation((Node *) p->sortTargets))));
 		if (checkExprHasGroupExtFuncs((Node *) p->sortTargets))
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
 					 errmsg("argument of percentile function must not contain grouping(), or group_id()"),
-					 parser_errposition(pstate, p->location)));
+					 parser_errposition(pstate, exprLocation((Node *) p->sortTargets))));
 	}
 
 	/* Percentiles are actually aggregates. */
@@ -3230,7 +3184,7 @@ typecast_expression(ParseState *pstate, Node *expr, TypeName *typename)
 								 targetType, targetTypmod,
 								 COERCION_EXPLICIT,
 								 COERCE_EXPLICIT_CAST,
-								 -1);
+								 typename->location);
 	if (expr == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_CANNOT_COERCE),

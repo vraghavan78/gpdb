@@ -45,7 +45,7 @@ typedef enum NodeTag
 	T_ShareNodeEntry,
 	T_PartitionState,
 	T_QueryDispatchDesc,
-	
+
 	/*
 	 * TAGS FOR PLAN NODES (plannodes.h)
 	 */

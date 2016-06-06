@@ -17,6 +17,7 @@ WANTED_DIRS = \
 		indexscan \
 		dict_int \
 		dict_xsyn \
+		intarray \
 		pageinspect \
 		test_parser
 

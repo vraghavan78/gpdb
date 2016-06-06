@@ -953,19 +953,19 @@ from genders
 order by student_id;
 ERROR:  invalid input syntax for integer: "Unknown"
 LINE 1: select gender, decode(gender, 'Z', 'Unknown', 1)
-                              ^
+                                           ^
 select gender, decode(gender, 'Z', 0,  'M')
 from genders
 order by student_id;
 ERROR:  invalid input syntax for integer: "M"
 LINE 1: select gender, decode(gender, 'Z', 0,  'M')
-                              ^
+                                               ^
 select gender, decode(gender, 'Z', 0, 'M', 'Male', 'F')
 from genders
 order by student_id;
 ERROR:  invalid input syntax for integer: "F"
 LINE 1: select gender, decode(gender, 'Z', 0, 'M', 'Male', 'F')
-                              ^
+                                                           ^
 select decode('2011-01-05'::date, '2011-01-01'::date, 2011, '2010-12-30'::date, 2010, '2012');
  case 
 ------

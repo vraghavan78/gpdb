@@ -481,11 +481,13 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
 			pg_type_desc = heap_open(TypeRelationId, RowExclusiveLock);
 
 			/*
-			 * GPDB_83_MERGE_FIXME: We probably shoudln't be using GetNewrelFileNode(), but
-			 * plain GetNewOid(), for those OIDs that are not actually relfilenodes.
+			 * GPDB_83_MERGE_FIXME: We probably shoudln't be using
+			 * GetNewrelFileNode(), but plain GetNewOid(), for those OIDs
+			 * that are not actually relfilenodes.
 			 */
 			intoOidInfo = makeNode(TableOidInfo);
 			ddesc->intoOidInfo = intoOidInfo;
+
 			intoOidInfo->relOid = GetNewRelFileNode(reltablespace, false, pg_class_desc);
 			elog(DEBUG3, "ExecutorStart assigned new intoOidInfo.relOid = %d",
 				 intoOidInfo->relOid);
@@ -681,6 +683,8 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
 
 			queryDesc->ddesc->sliceTable = estate->es_sliceTable;
 
+			build_tuple_node_list(&queryDesc->ddesc->transientTypeRecords);
+
 			/*
 			 * First, see whether we need to pre-execute any initPlan subplans.
 			 */
@@ -696,8 +700,6 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
 																   queryDesc->params,
 																   queryDesc->estate->es_param_exec_vals);
 			}
-
-			build_tuple_node_list(&queryDesc->ddesc->transientTypeRecords);
 
 			/*
 			 * This call returns after launching the threads that send the
@@ -4880,16 +4882,6 @@ OpenIntoRel(QueryDesc *queryDesc)
 	intoOid = intoOidInfo->relOid;
 	intoComptypeOid = intoOidInfo->comptypeOid;
 	intoComptypeArrayOid = intoOidInfo->comptypeArrayOid;
-
-	/*
-	 * Security check: disallow creating temp tables from security-restricted
-	 * code.  This is needed because calling code might not expect untrusted
-	 * tables to appear in pg_temp at the front of its search path.
-	 */
-	if (into->rel->istemp && InSecurityRestrictedOperation())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("cannot create temporary table within security-restricted operation")));
 
 	/*
 	 * Security check: disallow creating temp tables from security-restricted

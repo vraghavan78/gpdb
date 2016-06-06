@@ -1901,7 +1901,8 @@ zone_value:
 						&& (($6 & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0))
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("time zone interval must be HOUR or HOUR TO MINUTE")));
+								 errmsg("time zone interval must be HOUR or HOUR TO MINUTE"),
+									 scanner_errposition(@6)));
 					n->typname->typmods = list_make2(makeIntConst($6, @6),
 													 makeIntConst($3, @3));
 					$$ = (Node *)n;
@@ -5460,6 +5461,7 @@ DefineStmt:
 											scanner_errposition(@3)));
 							break;
 					}
+					r->location = @3;
 					n->typevar = r;
 					n->coldeflist = $6;
 					n->relOid = 0;
@@ -5633,14 +5635,14 @@ opclass_item:
 					n->recheck = $4;
 					$$ = (Node *) n;
 				}
-			| OPERATOR Iconst any_operator '(' oper_argtypes ')' opt_recheck
+			| OPERATOR Iconst any_operator oper_argtypes opt_recheck
 				{
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_OPERATOR;
 					n->name = $3;
-					n->args = $5;
+					n->args = $4;
 					n->number = $2;
-					n->recheck = $7;
+					n->recheck = $5;
 					$$ = (Node *) n;
 				}
 			| FUNCTION Iconst func_name func_args
@@ -5942,14 +5944,14 @@ CommentStmt:
 					n->comment = $7;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON OPERATOR any_operator '(' oper_argtypes ')'
+			| COMMENT ON OPERATOR any_operator oper_argtypes
 			IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_OPERATOR;
 					n->objname = $4;
-					n->objargs = $6;
-					n->comment = $9;
+					n->objargs = $5;
+					n->comment = $7;
 					$$ = (Node *) n;
 				}
 			| COMMENT ON CONSTRAINT name ON any_name IS comment_text
@@ -7043,43 +7045,43 @@ RemoveAggrStmt:
 		;
 
 RemoveOperStmt:
-			DROP OPERATOR any_operator '(' oper_argtypes ')' opt_drop_behavior
+			DROP OPERATOR any_operator oper_argtypes opt_drop_behavior
 				{
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
 					n->kind = OBJECT_OPERATOR;
 					n->name = $3;
-					n->args = $5;
-					n->behavior = $7;
+					n->args = $4;
+					n->behavior = $5;
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
-			| DROP OPERATOR IF_P EXISTS any_operator '(' oper_argtypes ')' opt_drop_behavior
+			| DROP OPERATOR IF_P EXISTS any_operator oper_argtypes opt_drop_behavior
 				{
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
 					n->kind = OBJECT_OPERATOR;
 					n->name = $5;
-					n->args = $7;
-					n->behavior = $9;
+					n->args = $6;
+					n->behavior = $7;
 					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
 		;
 
 oper_argtypes:
-			Typename
+			'(' Typename ')'
 				{
 				   ereport(ERROR,
 						   (errcode(ERRCODE_SYNTAX_ERROR),
 							errmsg("missing argument"),
 							errhint("Use NONE to denote the missing argument of a unary operator."),
-							scanner_errposition(@1)));
+							scanner_errposition(@3)));
 				}
-			| Typename ',' Typename
-					{ $$ = list_make2($1, $3); }
-			| NONE ',' Typename							/* left unary */
-					{ $$ = list_make2(NULL, $3); }
-			| Typename ',' NONE							/* right unary */
-					{ $$ = list_make2($1, NULL); }
+			| '(' Typename ',' Typename ')'
+					{ $$ = list_make2($2, $4); }
+			| '(' NONE ',' Typename ')'					/* left unary */
+					{ $$ = list_make2(NULL, $4); }
+			| '(' Typename ',' NONE ')'					/* right unary */
+					{ $$ = list_make2($2, NULL); }
 		;
 
 any_operator:
@@ -7575,13 +7577,13 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 					n->newowner = $7;
 					$$ = (Node *)n;
 				}
-			| ALTER OPERATOR any_operator '(' oper_argtypes ')' OWNER TO RoleId
+			| ALTER OPERATOR any_operator oper_argtypes OWNER TO RoleId
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_OPERATOR;
 					n->object = $3;
-					n->objarg = $5;
-					n->newowner = $9;
+					n->objarg = $4;
+					n->newowner = $7;
 					$$ = (Node *)n;
 				}
 			| ALTER OPERATOR CLASS any_name USING access_method OWNER TO RoleId
@@ -9210,6 +9212,7 @@ sortby:		a_expr USING qual_all_Op opt_nulls_order
 					$$->sortby_dir = SORTBY_USING;
 					$$->sortby_nulls = $4;
 					$$->useOp = $3;
+					$$->location = @3;
 				}
 			| a_expr opt_asc_desc opt_nulls_order
 				{
@@ -9218,6 +9221,7 @@ sortby:		a_expr USING qual_all_Op opt_nulls_order
 					$$->sortby_dir = $2;
 					$$->sortby_nulls = $3;
 					$$->useOp = NIL;
+					$$->location = -1;		/* no operator */
 				}
 		;
 
@@ -11619,6 +11623,7 @@ func_expr:	simple_func FILTER '(' WHERE a_expr ')'
 					sortby->sortby_dir = SORTBY_DEFAULT;
 					sortby->sortby_nulls = SORTBY_NULLS_DEFAULT;
 					sortby->useOp = NIL;
+					sortby->location = -1;		/* no operator */
 					n->sortClause = list_make1(sortby);
 					n->location = @1;
 					$$ = (Node *) n;
@@ -12357,7 +12362,8 @@ qualified_name:
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("improper qualified name (too many dotted names): %s",
-											NameListToString(lcons(makeString($1), $2)))));
+											NameListToString(lcons(makeString($1), $2))),
+									 scanner_errposition(@1)));
 							break;
 					}
 					$$->location = @1;
@@ -13393,7 +13399,8 @@ SpecialRuleRelation:
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("OLD used in query that is not in a rule")));
+								 errmsg("OLD used in query that is not in a rule"),
+								 scanner_errposition(@1)));
 				}
 			| NEW
 				{
@@ -13402,7 +13409,8 @@ SpecialRuleRelation:
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("NEW used in query that is not in a rule")));
+								 errmsg("NEW used in query that is not in a rule"),
+								 scanner_errposition(@1)));
 				}
 		;
 

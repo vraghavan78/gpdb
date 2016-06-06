@@ -145,3 +145,7 @@ test: plancache limit copy2 temp domain rangefuncs prepare without_oid conversio
 #test: tablespace
 test: variadic_parameters
 test: default_parameters
+
+# test workfiles compressed using zlib
+# 'zlib' utilizes fault injectors so it needs to be in a group by itself
+test: zlib

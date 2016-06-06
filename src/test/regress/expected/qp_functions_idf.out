@@ -602,11 +602,11 @@ LINE 1: select median( median(a)) from perct;
 select median(percentile_cont(0.5) within group (order by a)) from perct;
 ERROR:  argument of percentile function must not contain aggregates
 LINE 1: select median(percentile_cont(0.5) within group (order by a)...
-               ^
+                      ^
 select a, percentile_disc(0.1234567890)  within group ( order by avg(a)) from perct group by a;
 ERROR:  argument of percentile function must not contain aggregates
-LINE 1: select a, percentile_disc(0.1234567890)  within group ( orde...
-                  ^
+LINE 1: ...ntile_disc(0.1234567890)  within group ( order by avg(a)) fr...
+                                                             ^
 select a,median( ( count (*) )) from perct group by 1 limit 2;
 ERROR:  argument of percentile function must not contain aggregates
 LINE 1: select a,median( ( count (*) )) from perct group by 1 limit ...
@@ -624,7 +624,7 @@ HINT:  No function matches the given name and argument types. You might need to 
 select sum(median(a))  from perct ;
 ERROR:  aggregate function calls cannot be nested
 LINE 1: select sum(median(a))  from perct ;
-               ^
+                   ^
 select median( median(0.9) ) ;
 ERROR:  argument of percentile function must not contain aggregates
 LINE 1: select median( median(0.9) ) ;
@@ -636,20 +636,26 @@ LINE 1: select median( percentile_cont(0.2) within group( ORDER by 1...
 -- SQL with IDF and Grouping Sets
 select a,median(b) from perct4 group by median(c);
 ERROR:  aggregates not allowed in GROUP BY clause
+LINE 1: select a,median(b) from perct4 group by median(c);
+                                                ^
 -- SQL with Outer aggregate reference and IDF
 select ( (select sum(a) from perct group by b having median(t.a) < 5 limit 1 ) ) from perct t;
 ERROR:  percentile functions cannot reference columns from outer queries
-LINE 1: ...ect ( (select sum(a) from perct group by b having median(t.a...
+LINE 1: ...select sum(a) from perct group by b having median(t.a) < 5 l...
                                                              ^
 select ( select percentile_cont(0.6) within group (order by t.a) from perct where a <10 limit 1 )  from perct t;
 ERROR:  percentile functions cannot reference columns from outer queries
-LINE 1: select ( select percentile_cont(0.6) within group (order by ...
-                        ^
+LINE 1: ...elect percentile_cont(0.6) within group (order by t.a) from ...
+                                                             ^
 -- SQL with Group by () and IDF
 select a,median(b) from perct group by ();
 ERROR:  column "perct.a" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select a,median(b) from perct group by ();
+               ^
 select a,percentile_cont(0.7) within group(order by b) from perct group by ();
 ERROR:  column "perct.a" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select a,percentile_cont(0.7) within group(order by b) from ...
+               ^
 -- SQL with Cube and IDF
 -- SQL with GroupingSets and IDF
 select percentile_cont(0.7) within group (order by a) from perct4 group by grouping sets((b),(c), ());
@@ -675,7 +681,7 @@ LINE 1: select percentile_cont(0.2) within group (order by stddev(b)...
 select median(avg(a) over()) from perct;
 ERROR:  argument of percentile function must not contain window functions
 LINE 1: select median(avg(a) over()) from perct;
-                      ^
+               ^
 -- SQL with math expression as input to median
 select b+1 as col1 ,median(a+b) from perct group by b order by b desc;
  col1 | median 

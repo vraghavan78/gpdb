@@ -103,6 +103,10 @@
 		appendBinaryStringInfo(str, (const char *)&slen, sizeof(int)); \
 		if (slen>0) appendBinaryStringInfo(str, node->fldname, strlen(node->fldname));}
 
+/* Write a parse location field (actually same as INT case) */
+#define WRITE_LOCATION_FIELD(fldname) \
+	{ appendBinaryStringInfo(str, (const char *)&node->fldname, sizeof(int)); }
+
 /* Write a Node field */
 #define WRITE_NODE_FIELD(fldname) \
 	(_outNode(str, node->fldname))
@@ -979,6 +983,10 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 	WRITE_OID_FIELD(checkAsUser);
 
 	WRITE_BOOL_FIELD(forceDistRandom);
+	/*
+	 * pseudocols is intentionally not serialized. It's only used in the planning
+	 * stage, so no need to transfer it to the QEs.
+	 */
 }
 
 static void

@@ -201,11 +201,13 @@ transformWindowFrameEdge(ParseState *pstate, WindowFrameEdge *e,
 				if (con->consttype != INT4OID)
 					ereport(ERROR,
 							(errcode(ERROR_INVALID_WINDOW_FRAME_PARAMETER),
-							 errmsg("ROWS parameter must be an integer expression")));
+							 errmsg("ROWS parameter must be an integer expression"),
+							 parser_errposition(pstate, con->location)));
 				if (DatumGetInt32(con->constvalue) < 0)
 					ereport(ERROR,
 							(errcode(ERROR_INVALID_WINDOW_FRAME_PARAMETER),
-							 errmsg("ROWS parameter cannot be negative")));
+							 errmsg("ROWS parameter cannot be negative"),
+							 parser_errposition(pstate, con->location)));
 			}
 
 			if (expr_contains_null_const((Expr *)e->val))
@@ -228,8 +230,7 @@ transformWindowFrameEdge(ParseState *pstate, WindowFrameEdge *e,
 			if (list_length(spec->order) != 1)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("only one ORDER BY column may be specified when"
-								" RANGE is used in a window specification"),
+						 errmsg("only one ORDER BY column may be specified when RANGE is used in a window specification"),
 						 parser_errposition(pstate, spec->location)));
 
 			/* e->val should already be transformed */
@@ -242,7 +243,8 @@ transformWindowFrameEdge(ParseState *pstate, WindowFrameEdge *e,
 				if (con->constisnull)
 					ereport(ERROR,
 							(errcode(ERROR_INVALID_WINDOW_FRAME_PARAMETER),
-							 errmsg("RANGE parameter cannot be NULL")));
+							 errmsg("RANGE parameter cannot be NULL"),
+							 parser_errposition(pstate, con->location)));
 			}
 
 			sort = (SortClause *)linitial(spec->order);
@@ -262,8 +264,7 @@ transformWindowFrameEdge(ParseState *pstate, WindowFrameEdge *e,
 			if (!HeapTupleIsValid(tup))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("window specification RANGE parameter type "
-								"must be coercible to ORDER BY column type")));
+						 errmsg("window specification RANGE parameter type must be coercible to ORDER BY column type")));
 
 			oprresult = ((Form_pg_operator)GETSTRUCT(tup))->oprresult;
 			newrtype = ((Form_pg_operator)GETSTRUCT(tup))->oprright;
@@ -297,7 +298,8 @@ transformWindowFrameEdge(ParseState *pstate, WindowFrameEdge *e,
 							 errhint("Operations between window specification "
 									 "the ORDER BY column and RANGE parameter "
 									 "must result in a data type which can be "
-									 "cast back to the ORDER BY column type")));
+									 "cast back to the ORDER BY column type"),
+							 parser_errposition(pstate, exprLocation((Node *) expr))));
 				}
 				else
 					e->val = (Node *)expr;
@@ -342,7 +344,8 @@ transformWindowFrameEdge(ParseState *pstate, WindowFrameEdge *e,
 					if (result)
 						ereport(ERROR,
 								(errcode(ERROR_INVALID_WINDOW_FRAME_PARAMETER),
-								 errmsg("RANGE parameter cannot be negative")));
+								 errmsg("RANGE parameter cannot be negative"),
+								 parser_errposition(pstate, con->location)));
 
 					ReleaseOperator(tup);
 					ReleaseType(typ);
@@ -377,16 +380,14 @@ winref_checkspec_walker(Node *node, void *ctx)
 			if (ref->has_order)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("DISTINCT cannot be used with "
-								"window specification containing an "
-								"ORDER BY clause")));
+						 errmsg("DISTINCT cannot be used with window specification containing an ORDER BY clause"),
+						 parser_errposition(ref->pstate, winref->location)));
 
 			if (ref->has_frame)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("DISTINCT cannot be used with "
-								"window specification containing a "
-								"framing clause")));
+						 errmsg("DISTINCT cannot be used with window specification containing a framing clause"),
+						 parser_errposition(ref->pstate, winref->location)));
 		}
 
 		/*
@@ -417,16 +418,14 @@ winref_checkspec_walker(Node *node, void *ctx)
 				if (wf->winrequireorder && !ref->has_order)
 					ereport(ERROR,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("window function \"%s\" requires a window "
-									"specification with an ordering clause",
+							 errmsg("window function \"%s\" requires a window specification with an ordering clause",
 									get_func_name(wf->winfnoid)),
 								parser_errposition(ref->pstate, winref->location)));
 
 				if (!wf->winallowframe && ref->has_frame)
 					ereport(ERROR,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("window function \"%s\" cannot be used with "
-									"a framed window specification",
+							 errmsg("window function \"%s\" cannot be used with a framed window specification",
 									get_func_name(wf->winfnoid)),
 								parser_errposition(ref->pstate, winref->location)));
 			}
@@ -502,16 +501,12 @@ transformWindowClause(ParseState *pstate, Query *qry)
 
 		clauseno++;
 
-        /* Include this WindowSpec's location in error messages. */
-        pstate->p_breadcrumb.node = (Node *)ws;
-
-        if (checkExprHasWindFuncs((Node *)ws))
-		{
+		if (checkExprHasWindFuncs((Node *)ws))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("cannot use window function in a window "
-							"specification")));
-		}
+					 errmsg("cannot use window function in a window specification"),
+					 parser_errposition(pstate, ws->location)));
+
 		/*
 		 * Loop through those clauses we've already processed to
 		 * a) check that the name passed in is not already taken and
@@ -540,8 +535,9 @@ transformWindowClause(ParseState *pstate, Query *qry)
 				if (ws->name != NULL && strcmp(ws2->name, ws->name) == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_OBJECT),
-							 errmsg("window name \"%s\" occurs more than once "
-									"in WINDOW clause", ws->name)));
+							 errmsg("window name \"%s\" occurs more than once in WINDOW clause",
+									ws->name),
+							 parser_errposition(pstate, ws->location)));
 
 				/*
 				 * If this spec has a parent reference, we need to test that
@@ -615,7 +611,8 @@ transformWindowClause(ParseState *pstate, Query *qry)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						errmsg("window specification \"%s\" not found",
-							   ws->parent)));
+							   ws->parent),
+						 parser_errposition(pstate, ws->location)));
 		}
 
 		newspec->name = ws->name;
@@ -651,9 +648,6 @@ transformWindowClause(ParseState *pstate, Query *qry)
 			}
 		}
 
-        /* Refresh our breadcrumb in case transformSortClause stepped on it. */
-        pstate->p_breadcrumb.node = (Node *)ws;
-
 		/*
 		 * Finally, process the framing clause. parseProcessWindFunc() will
 		 * have picked up window functions that do not support framing.
@@ -687,8 +681,8 @@ transformWindowClause(ParseState *pstate, Query *qry)
 			if (!ws->order && !newspec->order)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("window specifications with a framing clause "
-								"must have an ORDER BY clause")));
+						 errmsg("window specifications with a framing clause must have an ORDER BY clause"),
+					 parser_errposition(pstate, ws->location)));
 
 			if (nf->is_between)
 			{
@@ -698,36 +692,32 @@ transformWindowClause(ParseState *pstate, Query *qry)
 				if (nf->trail->kind == WINDOW_UNBOUND_FOLLOWING)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("conflicting bounds in window framing "
-									"clause"),
-							 errhint("First bound of BETWEEN clause in window "
-									"specification cannot be UNBOUNDED FOLLOWING")));
+							 errmsg("conflicting bounds in window framing clause"),
+							 errhint("First bound of BETWEEN clause in window specification cannot be UNBOUNDED FOLLOWING"),
+							 parser_errposition(pstate, exprLocation(nf->trail->val))));
 				if (nf->lead->kind == WINDOW_UNBOUND_PRECEDING)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("conflicting bounds in window framing "
-									"clause"),
-							 errhint("Second bound of BETWEEN clause in window "
-									"specification cannot be UNBOUNDED PRECEDING")));
+							 errmsg("conflicting bounds in window framing clause"),
+							 errhint("Second bound of BETWEEN clause in window specification cannot be UNBOUNDED PRECEDING"),
+							 parser_errposition(pstate, exprLocation(nf->lead->val))));
 				if (nf->trail->kind == WINDOW_CURRENT_ROW &&
 					(nf->lead->kind == WINDOW_BOUND_PRECEDING ||
 					 nf->lead->kind == WINDOW_UNBOUND_PRECEDING))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("conflicting bounds in window framing "
-									"clause"),
-							 errhint("Second bound cannot be PRECEDING "
-									 "when first bound is CURRENT ROW")));
+							 errmsg("conflicting bounds in window framing clause"),
+							 errhint("Second bound cannot be PRECEDING when first bound is CURRENT ROW"),
+							 parser_errposition(pstate, exprLocation(nf->lead->val))));
 				if ((nf->trail->kind == WINDOW_BOUND_FOLLOWING ||
 					 nf->trail->kind == WINDOW_UNBOUND_FOLLOWING) &&
 					!(nf->lead->kind == WINDOW_BOUND_FOLLOWING ||
 					  nf->lead->kind == WINDOW_UNBOUND_FOLLOWING))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("conflicting bounds in window framing "
-									"clause"),
-							 errhint("Second bound must be FOLLOWING if first "
-									 "bound is FOLLOWING")));
+							 errmsg("conflicting bounds in window framing clause"),
+							 errhint("Second bound must be FOLLOWING if first bound is FOLLOWING"),
+							 parser_errposition(pstate, exprLocation(nf->lead->val))));
 
 			}
 			else
@@ -1176,9 +1166,10 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	 * Check that we got something reasonable.	Many of these conditions are
 	 * impossible given restrictions of the grammar, but check 'em anyway.
 	 */
-	if (query->commandType != CMD_SELECT ||
+	if (!IsA(query, Query) ||
+		query->commandType != CMD_SELECT ||
 		query->utilityStmt != NULL)
-		elog(ERROR, "expected SELECT query from subquery in FROM");
+		elog(ERROR, "unexpected non-SELECT command in subquery in FROM");
 	if (query->intoClause != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1390,13 +1381,6 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 						Relids *containedRels)
 {
     Node                   *result;
-    ParseStateBreadCrumb    savebreadcrumb;
-
-    /* CDB: Push error location stack.  Must pop before return! */
-    Assert(pstate);
-    savebreadcrumb = pstate->p_breadcrumb;
-    pstate->p_breadcrumb.pop = &savebreadcrumb;
-    pstate->p_breadcrumb.node = n;
 
 	if (IsA(n, RangeVar))
 	{
@@ -1768,10 +1752,6 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(n));
     }
 
-    /* CDB: Pop error location stack. */
-    Assert(pstate->p_breadcrumb.pop == &savebreadcrumb);
-    pstate->p_breadcrumb = savebreadcrumb;
-
 	return result;
 }
 
@@ -2103,9 +2083,6 @@ findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
 {
 	TargetEntry *target_result = NULL;
 	ListCell   *tl;
-
-    /* CDB: Drop a breadcrumb in case of error. */
-    pstate->p_breadcrumb.node = node;
 
 	/*----------
 	 * Handle two special cases as mandated by the SQL92 spec:
@@ -2598,9 +2575,6 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		tl = findListTargetlistEntries(pstate, node, targetlist, false, false, 
                                        useSQL99);
 
-        /* CDB: Cursor position not available for errors below this point. */
-        pstate->p_breadcrumb.node = NULL;
-
 		foreach(tl_cell, tl)
 		{
 			tle = (TargetEntry*)lfirst(tl_cell);
@@ -2724,9 +2698,6 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 				findListTargetlistEntries(pstate, lfirst(lc),
 										  targetlist, false, true, useSQL99));
 		}
-
-        /* CDB: Cursor position not available for errors below this point. */
-        pstate->p_breadcrumb.node = NULL;
 
 		/*
 		 * For each GROUPING function, check if its argument(s) appear in the
@@ -2931,7 +2902,9 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 			if (tle->resjunk)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-						 errmsg("for SELECT DISTINCT, ORDER BY expressions must appear in select list")));
+						 errmsg("for SELECT DISTINCT, ORDER BY expressions must appear in select list"),
+						 parser_errposition(pstate,
+											exprLocation((Node *) tle->expr))));
 			else
 				result = lappend(result, copyObject(scl));
 		}

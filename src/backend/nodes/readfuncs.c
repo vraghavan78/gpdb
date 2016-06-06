@@ -333,65 +333,14 @@ _readQuery(void)
 	READ_NODE_FIELD(windowClause);
 	READ_NODE_FIELD(distinctClause);
 	READ_NODE_FIELD(sortClause);
-    if (pg_strtok_peek_fldname("scatterClause"))
-    {
-        READ_NODE_FIELD(scatterClause);
-    }
-
-	if (!pg_strtok_peek_fldname("cteList"))
-	{
-		/*
-		 * If the Query node does not contain cteList, it means that this query
-		 * does not contain WITH clause. We simple initialize relevant variables
-		 * here.
-		 *
-		 * Note that if the Query node does not contain cteList, it should not
-		 * contain hasRecursive or hasModifyingCTE.
-		 */
-		local_node->cteList = NULL;
-		local_node->hasRecursive = false;
-		local_node->hasModifyingCTE = false;
-	}
-	else
-	{
-		READ_NODE_FIELD(cteList);
-		READ_BOOL_FIELD(hasRecursive);
-		READ_BOOL_FIELD(hasModifyingCTE);
-	}
-
+	READ_NODE_FIELD(scatterClause);
+	READ_NODE_FIELD(cteList);
+	READ_BOOL_FIELD(hasRecursive);
+	READ_BOOL_FIELD(hasModifyingCTE);
 	READ_NODE_FIELD(limitOffset);
 	READ_NODE_FIELD(limitCount);
 	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(setOperations);
-
-    /* In some earlier releases (including 3.3) a TableOidInfo was held in the
-     * Query node.  Maybe some values got stored in the catalog as part of a
-     * rule (possible?)  Maybe the Query was a CTAS. In any case, we don't want
-     * to remember the OIDs assigned in the past.
-     *
-     * Now TableOidInfo is in the node's intoClause. As noted, we don't actually
-     * need the values but, if they exist, we need scan over them.
-     */
-    if (pg_strtok_peek_fldname("intoOidInfo.relOid"))
-    {
-		(void) READ_SCALAR_VALUE(intoOidInfo.relOid, InvalidOid);
-		(void) READ_SCALAR_VALUE(intoOidInfo.comptypeOid, InvalidOid);
-		(void) READ_SCALAR_VALUE(intoOidInfo.toastOid, InvalidOid);
-		(void) READ_SCALAR_VALUE(intoOidInfo.toastIndexOid, InvalidOid);
-		(void) READ_SCALAR_VALUE(intoOidInfo.toastComptypeOid, InvalidOid);
-		(void) READ_SCALAR_VALUE(intoOidInfo.aosegOid, InvalidOid);
-		(void) READ_SCALAR_VALUE(intoOidInfo.aosegIndexOid, InvalidOid);
-		(void) READ_SCALAR_VALUE(intoOidInfo.aosegComptypeOid, InvalidOid);
-		(void) READ_SCALAR_VALUE(intoOidInfo.aovisimapOid, InvalidOid);
-		(void) READ_SCALAR_VALUE(intoOidInfo.aovisimapIndexOid, InvalidOid);
-		(void) READ_SCALAR_VALUE(intoOidInfo.aovisimapComptypeOid, InvalidOid);
-	}
-    if (pg_strtok_peek_fldname("intoOidInfo.aoblkdirOid"))
-	{
-		(void) READ_SCALAR_VALUE(intoOidInfo.aoblkdirOid, InvalidOid);
-		(void) READ_SCALAR_VALUE(intoOidInfo.aoblkdirIndexOid, InvalidOid);
-		(void) READ_SCALAR_VALUE(intoOidInfo.aoblkdirComptypeOid, InvalidOid);
-    }
 
 	local_node->intoPolicy = NULL;
 
@@ -556,12 +505,7 @@ _readWindowSpec(void)
 	READ_NODE_FIELD(partition);
 	READ_NODE_FIELD(order);
 	READ_NODE_FIELD(frame);
-
-    /* CDB: location field added in 3.2; missing from older serialized trees */
-    if (pg_strtok_peek_fldname("location"))
-    	READ_INT_FIELD(location);
-    else
-        local_node->location = -1;
+	READ_INT_FIELD(location);
 
 	READ_DONE();
 }
@@ -701,12 +645,7 @@ _readRangeVar(void)
 	READ_ENUM_FIELD(inhOpt, InhOption);
 	READ_BOOL_FIELD(istemp);
 	READ_NODE_FIELD(alias);
-
-    /* CDB: location field added in 3.2; missing from older serialized trees */
-    if (pg_strtok_peek_fldname("location"))
-    	READ_INT_FIELD(location);
-    else
-        local_node->location = -1;
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -1451,26 +1390,8 @@ _readAggref(void)
 	READ_UINT_FIELD(agglevelsup);
 	READ_BOOL_FIELD(aggstar);
 	READ_BOOL_FIELD(aggdistinct);
-
-    /*
-     * CDB: This field was added after the MPP 2.1p2 release.  It's filled in
-     * by the planner and not present in nodes stored persistently.  So if
-     * it's missing, just let the field stay 0.
-     */
-    if (pg_strtok_peek_fldname("aggstage"))
-    {                           /* braces required, macro doesn't have 'em */
-        READ_ENUM_FIELD(aggstage, AggStage);
-    }
-
-    /*
-     * CDB: This field was added after the 4.0 release, it is only filled in
-     * when an aggregate uses the agg(<parameter-list> order by <sort-lits>)
-     * syntax.
-     */
-    if (pg_strtok_peek_fldname("aggorder"))
-    {                           /* braces required, macro doesn't have 'em */
-        READ_NODE_FIELD(aggorder);
-    }
+	READ_ENUM_FIELD(aggstage, AggStage);
+	READ_NODE_FIELD(aggorder);
 
 	READ_DONE();
 }
@@ -1546,11 +1467,7 @@ _readFuncExpr(void)
 	READ_BOOL_FIELD(funcretset);
 	READ_ENUM_FIELD(funcformat, CoercionForm);
 	READ_NODE_FIELD(args);
-
-	if (pg_strtok_peek_fldname("is_tablefunc"))
-	{
-		READ_BOOL_FIELD(is_tablefunc);  /* GPDB */
-	}
+	READ_BOOL_FIELD(is_tablefunc);  /* GPDB */
 
 	READ_DONE();
 }
@@ -3232,6 +3149,7 @@ static ParseNodeInfo infoAr[] =
 	{"SORTBY", (ReadFn)_readSortBy},
 	{"SORTCLAUSE", (ReadFn)_readSortClause},
 	{"SUBLINK", (ReadFn)_readSubLink},
+	{"TABLEOIDINFO", (ReadFn)_readTableOidInfo},
 	{"TABLEVALUEEXPR", (ReadFn)_readTableValueExpr},
 	{"TARGETENTRY", (ReadFn)_readTargetEntry},
 	{"TRUNCATESTMT", (ReadFn)_readTruncateStmt},

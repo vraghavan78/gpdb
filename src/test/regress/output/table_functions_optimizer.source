@@ -2088,6 +2088,8 @@ SELECT count(*) FROM example HAVING TABLE(select a from example) is not null;
 ERROR:  invalid use of TABLE value expression
 SELECT sum(a) over (partition by TABLE(select * from example) order by b) from example;
 ERROR:  could not identify an ordering operator for type anytable
+LINE 1: SELECT sum(a) over (partition by TABLE(select * from example...
+                                         ^
 HINT:  Use an explicit ordering operator or modify the query.
 LINE 1: SELECT sum(a) over (partition by TABLE(select * from example...
         ^
@@ -2908,6 +2910,8 @@ SELECT * FROM project( TABLE( SELECT * FROM pg_am ), 100);
 ERROR:  invalid column position 100 (regress.c:2175)
 SELECT * FROM project( TABLE( SELECT * FROM pg_am ), (ARRAY[2,3])[1]);
 ERROR:  unable to resolve function argument (execQual.c:5348)
+LINE 1: ... FROM project( TABLE( SELECT * FROM pg_am ), (ARRAY[2,3])[1]...
+                                                             ^
 SELECT * FROM project( TABLE( SELECT * FROM pg_am ), (ROW(1, '')::example_r).a);
 ERROR:  unable to resolve function argument (execQual.c:5348)
 -- ========================

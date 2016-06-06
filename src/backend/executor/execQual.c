@@ -6301,7 +6301,9 @@ ExecEvalFunctionArgToConst(FuncExpr *fexpr, int argno, bool *isnull)
 
 	argtype = exprType((Node *) aexpr);
 	if (!OidIsValid(argtype))
-		elog(ERROR, "unable to resolve function argument type");
+		ereport(ERROR,
+				(errmsg("unable to resolve function argument type"),
+				 errposition(exprLocation((Node *) aexpr))));
 	argtypmod = exprTypmod((Node *) aexpr);
 
 	result = (Const *) evaluate_expr(aexpr, argtype, argtypmod);

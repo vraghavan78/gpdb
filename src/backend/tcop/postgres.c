@@ -996,8 +996,8 @@ pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams,
  * query_string -- optional query text (C string).
  * serializedQuerytree[len]  -- Query node or (NULL,0) if plan provided.
  * serializedPlantree[len] -- PlannedStmt node, or (NULL,0) if query provided.
+ * serializedParams[len] -- optional parameters
  * serializedQueryDispatchDesc[len] -- QueryDispatchDesc node, or (NULL,0) if query provided.
- * serializedParms[len] -- optional parameters
  * localSlice -- slice table index
  *
  * Caller may supply either a Query (representing utility command) or
@@ -1083,15 +1083,15 @@ exec_mpp_query(const char *query_string,
 		utilityStmt = query->utilityStmt;
 	}
 
-	/*
-	 * Deserialize the query execution plan (a PlannedStmt node), if there is one.
-	 */
+ 	/*
+     * Deserialize the query execution plan (a PlannedStmt node), if there is one.
+     */
 	if (serializedPlantree != NULL && serializedPlantreelen > 0)
-    {
+	{
 		plan = (PlannedStmt *) deserializeNode(serializedPlantree,serializedPlantreelen);
 		if (!plan || !IsA(plan, PlannedStmt))
 			elog(ERROR, "MPPEXEC: receive invalid planned statement");
-	}
+    }
 
 	/*
      * Deserialize the extra execution information (a QueryDispatchDesc node), if there is one.

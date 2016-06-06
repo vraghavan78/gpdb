@@ -1653,7 +1653,7 @@ addImplicitRTE(ParseState *pstate, RangeVar *relation)
  */
 void
 expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
-		int location, bool include_dropped,
+		  int location, bool include_dropped,
 		  List **colnames, List **colvars)
 {
 	int			varattno;

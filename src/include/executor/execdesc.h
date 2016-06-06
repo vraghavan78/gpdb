@@ -33,9 +33,9 @@ typedef enum GangType
 {
 	GANGTYPE_UNALLOCATED,       /* a root slice executed by the qDisp */
 	GANGTYPE_ENTRYDB_READER,    /* a 1-gang with read access to the entry db */
-	GANGTYPE_SINGLETON_READER,  /* a 1-gang to read the segment dbs */
-	GANGTYPE_PRIMARY_READER,    /* a N-gang to read the segment dbs */
-	GANGTYPE_PRIMARY_WRITER     /* the N-gang that can update the segment dbs */
+	GANGTYPE_SINGLETON_READER,	/* a 1-gang to read the segment dbs */
+	GANGTYPE_PRIMARY_READER,    /* a 1-gang or N-gang to read the segment dbs */
+	GANGTYPE_PRIMARY_WRITER		/* the N-gang that can update the segment dbs */
 } GangType;
 
 /*
@@ -48,7 +48,7 @@ typedef enum GangType
  */
 typedef struct Slice
 {
-	NodeTag type;
+	NodeTag		type;
 
 	/*
 	 * The index in the global slice table of this slice. The root slice of
@@ -71,7 +71,7 @@ typedef struct Slice
 	int			parentIndex;
 
 	/*
-	 * An integer list of indices in the global slice table (origin 0)
+	 * An integer list of indices in the global slice table (origin  0)
 	 * of the child slices of this slice, or -1 if this is a leaf slice.
 	 * A child slice corresponds to a receiving motion in this slice.
 	 */
@@ -81,7 +81,7 @@ typedef struct Slice
 	GangType	gangType;
 
 	/*
-	 * How many gang members needed
+	 * How many gang members needed?
 	 *
 	 * It is set before the process lists below and used to decide how
 	 * to initialize them.
@@ -89,26 +89,28 @@ typedef struct Slice
 	int			gangSize;
 
 	/*
-	 * How many of the gang members will actually be used. This takes into
-	 * account directDispatch information
+	 * How many of the gang members will actually be used? This takes into
+	 * account directDispatch information.
 	 */
 	int			numGangMembersToBeActive;
 
 	/*
-	 * directDispatch->isDirectDispatch should ONLY be set for a slice when it requires an n-gang.
+	 * directDispatch->isDirectDispatch should ONLY be set for a slice
+	 * when it requires an n-gang.
 	 */
 	DirectDispatchInfo directDispatch;
 
 	struct Gang *primaryGang;
 
-	/* tell dispatch agents which gang we're talking about.*/
+	/* tell dispatch agents which gang we're talking about. */
 	int          primary_gang_id;
 
 	/*
-	 * A list of CDBProcess nodes corresponding to the worker processes allocated
-	 * to implement this plan slice.
+	 * A list of CDBProcess nodes corresponding to the worker processes
+	 * allocated to implement this plan slice.
 	 *
-	 * The number of processes must agree with the the plan slice to be implemented.
+	 * The number of processes must agree with the the plan slice to be
+	 * implemented.
 	 */
 	List	   *primaryProcesses;
 } Slice;
@@ -119,11 +121,11 @@ typedef struct Slice
  *
  * Slice 0 is the root slice of plan as a whole.
  * Slices 1 through nMotion are motion slices with a sending motion at
- * the root of the slice.
+ *  the root of the slice.
  * Slices nMotion+1 and on are root slices of initPlans.
  *
  * There may be unused slices in case the plan contains subplans that
- * are not initPlans. (This won't happen unless MPP decides to support
+ * are  not initPlans.  (This won't happen unless MPP decides to support
  * subplans similarly to PostgreSQL, which isn't the current plan.)
  */
 typedef struct SliceTable
@@ -134,7 +136,7 @@ typedef struct SliceTable
 	int			nInitPlans;		/* The number of initplan slices allocated */
 	int			localSlice;		/* Index of the slice to execute. */
 	List	   *slices;			/* List of slices */
-    bool		doInstrument;	/* true => collect stats for EXPLAIN ANALYZE */
+	bool		doInstrument;	/* true => collect stats for EXPLAIN ANALYZE */
 	uint32		ic_instance_id;
 } SliceTable;
 
@@ -154,12 +156,11 @@ typedef struct CursorPosInfo
 /* ----------------
  *		query dispatch information:
  *
- *	a QueryDispatchDesc encapsulates extra information that need to be
- *	dispatched from QD to QEs.
+ * a QueryDispatchDesc encapsulates extra information that need to be
+ * dispatched from QD to QEs.
  *
  * A QueryDesc is created separately on each segment, but QueryDispatchDesc
  * is created in the QD, and passed to each segment.
- *
  * ---------------------
  */
 typedef struct QueryDispatchDesc

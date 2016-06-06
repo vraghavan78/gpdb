@@ -109,6 +109,9 @@
 		} \
 		local_node->fldname = nn;  }
 
+/* Read a parse location field (and throw away the value, per notes above) */
+#define READ_LOCATION_FIELD(fldname) READ_INT_FIELD(fldname)
+
 /* Read a Node field */
 #define READ_NODE_FIELD(fldname) \
 	local_node->fldname = readNodeBinary()
@@ -357,7 +360,7 @@ _readRangeVar(void)
 	READ_ENUM_FIELD(inhOpt, InhOption); Assert(local_node->inhOpt <= INH_DEFAULT);
 	READ_BOOL_FIELD(istemp);
 	READ_NODE_FIELD(alias);
-    READ_INT_FIELD(location);   /*CDB*/
+    READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
@@ -1107,7 +1110,7 @@ _readRangeTblEntry(void)
 	READ_OID_FIELD(checkAsUser);
 
 	READ_BOOL_FIELD(forceDistRandom);
-
+	/* 'pseudocols' is intentionally missing, see out function */
 	READ_DONE();
 }
 

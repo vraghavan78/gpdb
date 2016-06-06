@@ -2797,9 +2797,6 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 									  (Node *) copyObject(stmt->whereClause),
 										"WHERE");
 
-    /* CDB: Cursor position not available for errors below this point. */
-    pstate->p_breadcrumb.node = NULL;
-
 	if (list_length(pstate->p_rtable) != 2)		/* naughty, naughty... */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
