@@ -670,9 +670,10 @@ DefineIndex(RangeVar *heapRelation,
 		 * Dispatch the command to all primary and mirror segment dbs.
 		 * Start a global transaction and reconfigure cluster if needed.
 		 * Wait for QEs to finish.  Exit via ereport(ERROR,...) if error.
+		 * (For a concurrent build, we do this later, see below.)
 		 */
 		if (shouldDispatch)
-			CdbDispatchUtilityStatement((Node *)stmt, "DefineIndex");
+			CdbDispatchUtilityStatement((Node *) stmt, "DefineIndex");
 
 		return;					/* We're done, in the standard case */
 	}
@@ -716,8 +717,8 @@ DefineIndex(RangeVar *heapRelation,
 	 * the empty index in the master, but before we proceed to fill it.
 	 * This ensures that if something goes wrong, we don't end up in
 	 * a state where the index exists on some segments but not the master.
-	 * It also ensures that if the index is only marked as valid on the
-	 * master after it's been successfully built and markes as valid on
+	 * It also ensures that the index is only marked as valid on the
+	 * master, after it's been successfully built and marked as valid on
 	 * all the segments.
 	 */
 	if (shouldDispatch)
@@ -731,7 +732,7 @@ DefineIndex(RangeVar *heapRelation,
 			 * Doesn't start a global transaction.  Doesn't wait for
 			 * the QEs to finish execution.
 			 */
-			cdbdisp_dispatchUtilityStatement((Node *)stmt,
+			cdbdisp_dispatchUtilityStatement((Node *) stmt,
 											 true,      /* cancelOnError */
 											 false,      /* startTransaction */
 											 true,      /* withSnapshot */

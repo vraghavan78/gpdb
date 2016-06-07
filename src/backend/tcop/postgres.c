@@ -1306,10 +1306,10 @@ exec_mpp_query(const char *query_string,
 					(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 					 errmsg("current transaction is aborted, "
 							"commands ignored until end of transaction block")));
-		
+
 		/* Make sure we are in a transaction command */
 		start_xact_command();
-		
+
 		/* If we got a cancel signal in parsing or prior command, quit */
 		CHECK_FOR_INTERRUPTS();
 
@@ -1323,7 +1323,7 @@ exec_mpp_query(const char *query_string,
 
 		/* If we got a cancel signal in analysis or planning, quit */
 		CHECK_FOR_INTERRUPTS();
-		
+
 		/*
 		 * Create unnamed portal to run the query or queries in. If there
 		 * already is one, silently drop it.
@@ -1437,7 +1437,6 @@ exec_mpp_query(const char *query_string,
 	{
 		BackoffBackendEntryExit();
 	}
-
 
 	debug_query_string = NULL;
 }
@@ -1608,12 +1607,8 @@ exec_simple_query(const char *query_string, const char *seqServerHost, int seqSe
 	 */
 	parsetree_list = pg_parse_query(query_string);
 
-	if (gp_mapreduce_define)
-	{
-		/* Disable statement logging during mapreduce */
-	}
 	/* Log immediately if dictated by log_statement */
-	else if (check_log_statement(parsetree_list))
+	if (check_log_statement(parsetree_list))
 	{
 		ereport(LOG,
 				(errmsg("statement: %s", query_string),
@@ -1869,22 +1864,20 @@ exec_simple_query(const char *query_string, const char *seqServerHost, int seqSe
 	/*
 	 * Emit duration logging if appropriate.
 	 */
-	if (!gp_mapreduce_define)
+	switch (check_log_duration(msec_str, was_logged))
 	{
-		switch (check_log_duration(msec_str, was_logged))
-		{
-			case 1:
-				ereport(LOG,
+		case 1:
+			ereport(LOG,
 					(errmsg("duration: %s ms", msec_str),
 					 errhidestmt(true)));
-				break;
-			case 2:
-				ereport(LOG, (errmsg("duration: %s ms  statement: %s",
-									 msec_str, query_string),
-							  errdetail_execute(parsetree_list),
-							  errhidestmt(true)));
-				break;
-		}
+			break;
+		case 2:
+			ereport(LOG,
+					(errmsg("duration: %s ms  statement: %s",
+							msec_str, query_string),
+					 errdetail_execute(parsetree_list),
+					 errhidestmt(true)));
+			break;
 	}
 
 	if (save_log_statement_stats)
@@ -2746,7 +2739,7 @@ exec_execute_message(const char *portal_name, int64 max_rows)
 	 * Report query to various monitoring facilities.
 	 */
 	debug_query_string = sourceText ? sourceText : "<EXECUTE>";
-		
+
 	pgstat_report_activity(debug_query_string);
 
 	set_ps_display(portal->commandTag, false);
@@ -2897,6 +2890,10 @@ check_log_statement(List *stmt_list)
 {
 	ListCell   *stmt_item;
 
+	/* Disable statement logging during mapreduce */
+	if (gp_mapreduce_define)
+		return false;
+
 	if (log_statement == LOGSTMT_NONE)
 		return false;
 	if (log_statement == LOGSTMT_ALL)
@@ -2932,6 +2929,10 @@ check_log_statement(List *stmt_list)
 int
 check_log_duration(char *msec_str, bool was_logged)
 {
+	/* Disable statement logging during mapreduce */
+	if (gp_mapreduce_define)
+		return 0;
+
 	if (log_duration || log_min_duration_statement >= 0)
 	{
 		long		secs;

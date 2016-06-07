@@ -16,6 +16,7 @@
 #include "access/relscan.h"
 #include "access/transam.h"
 #include "executor/execdebug.h"
+#include "executor/nodeBitmapHeapscan.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "utils/memutils.h"
