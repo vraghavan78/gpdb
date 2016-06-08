@@ -466,8 +466,14 @@ convert_sourcefiles_in(char *source, char * dest_dir, char *dest, char *suffix)
 		exit_nicely(2);
 
 	/* also create the output directory if not present */
-	if (!directory_exists(dest_dir))
-		make_directory(dest_dir);
+	{
+		char		outdir[MAXPGPATH];
+
+		snprintf(outdir, MAXPGPATH, "%s/%s", dest_dir, dest);
+
+		if (!directory_exists(outdir))
+			make_directory(outdir);
+	}
 
 #ifdef WIN32
 	/* in Win32, replace backslashes with forward slashes */
