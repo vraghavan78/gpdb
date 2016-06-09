@@ -582,17 +582,12 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	AssertImply(!ismemtuple, !pbind);
 	AssertImply(ismemtuple && oldtup, is_heaptuple_memtuple(oldtup));
 	Assert(toast_tuple_target > 0);
-	
+
 	/*
-	 * GPDB_MERGE83_FIXME: This comment is clearly incorrect given the
-	 * code since we've inverted the assertion the comment is for.
-	 *
 	 * We should only ever be called for tuples of plain relations ---
 	 * recursing on a toast rel is bad news.
 	 */
-	//Assert(rel->rd_rel->relkind == RELKIND_RELATION);
-	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(LOG, "Why are we toasting a non-relation! %c ", rel->rd_rel->relkind);
+	Assert(rel->rd_rel->relkind == RELKIND_RELATION);
 
 	/*
 	 * Get the tuple descriptor and break down the tuple(s) into fields.
