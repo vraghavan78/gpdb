@@ -3067,26 +3067,23 @@ recomputeNamespacePath(void)
 	list_free(oidlist);
 }
 
+/*
+ * InitTempTableNamespace
+ *		Initialize temp table namespace on first use in a particular backend
+ */
 static void
 InitTempTableNamespace(void)
 {
 	InitTempTableNamespaceWithOids(InvalidOid, InvalidOid);
 }
 
-/*
- * InitTempTableNamespace
- *		Initialize temp table namespace on first use in a particular backend
- */
 void
 InitTempTableNamespaceWithOids(Oid tempSchema, Oid tempToastSchema)
 {
 	char		namespaceName[NAMEDATALEN];
 	Oid			namespaceId;
 	Oid			toastspaceId;
-	CreateSchemaStmt *stmt;
 	int			session_suffix;
-
-	Assert(!OidIsValid(myTempNamespace));
 
 	/*
 	 * First, do permission check to see if we are authorized to make temp
@@ -3123,7 +3120,7 @@ InitTempTableNamespaceWithOids(Oid tempSchema, Oid tempToastSchema)
 		default:
 			/* Should never hit this */
 			elog(ERROR, "invalid backend temp schema creation");
-			session_suffix = 0; /* keep compiler quiet */
+			session_suffix = -1;	/* keep compiler quiet */
 			break;
 	}
 
@@ -3132,33 +3129,48 @@ InitTempTableNamespaceWithOids(Oid tempSchema, Oid tempToastSchema)
 	namespaceId = GetSysCacheOid(NAMESPACENAME,
 								 CStringGetDatum(namespaceName),
 								 0, 0, 0);
-	if (!OidIsValid(namespaceId))
+
+	/*
+	 * GPDB: Delete old temp schema.
+	 *
+	 * Remove any vestigages of old temporary schema, if any.  This can
+	 * happen when an old session crashes and doesn't run normal session
+	 * shutdown.
+	 *
+	 * In postgres they try to reuse existing schemas in this case,
+	 * however that does not work well for us since the schemas may exist
+	 * on a segment by segment basis and we want to keep them syncronized
+	 * on oid.  The best way of dealing with this is to just delete the
+	 * old schemas.
+	 */
+	if (OidIsValid(namespaceId))
 	{
-		/*
-		 * First use of this temp namespace in this database; create it. The
-		 * temp namespaces are always owned by the superuser.  We leave their
-		 * permissions at default --- i.e., no access except to superuser ---
-		 * to ensure that unprivileged users can't peek at other backends'
-		 * temp tables.  This works because the places that access the temp
-		 * namespace for my own backend skip permissions checks on it.
-		 */
-		namespaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID, tempSchema);
-		/* Advance command counter to make namespace visible */
+		RemoveTempRelations(namespaceId);
+		RemoveSchemaById(namespaceId);
+		elog(DEBUG1, "Remove schema entry %u from pg_namespace",
+			 namespaceId);
+		namespaceId = InvalidOid;
 		CommandCounterIncrement();
 	}
-	else
-	{
-		/*
-		 * If the namespace already exists, clean it out (in case the former
-		 * owner crashed without doing so).
-		 */
-		RemoveTempRelations(namespaceId);
-	}
+
+	/*
+	 * First use of this temp namespace in this database; create it. The
+	 * temp namespaces are always owned by the superuser.  We leave their
+	 * permissions at default --- i.e., no access except to superuser ---
+	 * to ensure that unprivileged users can't peek at other backends'
+	 * temp tables.  This works because the places that access the temp
+	 * namespace for my own backend skip permissions checks on it.
+	 */
+	namespaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID, tempSchema);
+	/* Advance command counter to make namespace visible */
+	CommandCounterIncrement();
 
 	/*
 	 * If the corresponding toast-table namespace doesn't exist yet, create it.
 	 * (We assume there is no need to clean it out if it does exist, since
 	 * dropping a parent table should make its toast table go away.)
+	 * (in GPDB, though, we drop and recreate it anyway, to make sure it has
+	 * the same OID on master and segments.)
 	 */
 	snprintf(namespaceName, sizeof(namespaceName), "pg_toast_temp_%d",
 			 session_suffix);
@@ -3166,12 +3178,17 @@ InitTempTableNamespaceWithOids(Oid tempSchema, Oid tempToastSchema)
 	toastspaceId = GetSysCacheOid(NAMESPACENAME,
 								  CStringGetDatum(namespaceName),
 								  0, 0, 0);
-	if (!OidIsValid(toastspaceId))
+	if (OidIsValid(toastspaceId))
 	{
-		toastspaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID, tempToastSchema);
-		/* Advance command counter to make namespace visible */
+		RemoveSchemaById(toastspaceId);
+		elog(DEBUG1, "Remove schema entry %u from pg_namespace",
+			 namespaceId);
+		toastspaceId = InvalidOid;
 		CommandCounterIncrement();
 	}
+	toastspaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID, tempToastSchema);
+	/* Advance command counter to make namespace visible */
+	CommandCounterIncrement();
 
 	/*
 	 * Okay, we've prepared the temp namespace ... but it's not committed yet,
@@ -3187,17 +3204,18 @@ InitTempTableNamespaceWithOids(Oid tempSchema, Oid tempToastSchema)
 
 	baseSearchPathValid = false;	/* need to rebuild list */
 
-	/* 
+	/*
 	 * GPDB: Dispatch a special CREATE SCHEMA command, to also create the
 	 * temp schemas in all the segments.
 	 *
-	 * We need to keep the OID of temp schemas synchronized across the
+	 * We need to keep the OID of the temp schema synchronized across the
 	 * cluster which means that we must go through regular dispatch
 	 * logic rather than letting every backend manage it.
 	 */
 	if (Gp_role == GP_ROLE_DISPATCH)
 	{
-		/* Execute the internal DDL */
+		CreateSchemaStmt *stmt;
+
 		stmt = makeNode(CreateSchemaStmt);
 		stmt->istemp	 = true;
 		stmt->schemaOid = namespaceId;

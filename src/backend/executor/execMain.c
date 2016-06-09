@@ -2036,8 +2036,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 									     tupType->tdhasoid);
 
 				j = ExecInitJunkFilter(planstate->plan->targetlist,
-									   cleanTupType,
-									   ExecInitExtraTupleSlot(estate));
+						       cleanTupType,
+						       ExecInitExtraTupleSlot(estate));
 				estate->es_junkFilter = j;
 				if (estate->es_result_relation_info)
 					estate->es_result_relation_info->ri_junkFilter = j;
