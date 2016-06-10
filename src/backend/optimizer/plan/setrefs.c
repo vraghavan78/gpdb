@@ -71,6 +71,14 @@ typedef struct
 	int			rtoffset;
 } fix_upper_expr_context;
 
+typedef struct
+{
+	plan_tree_base_prefix base;
+
+	PlannerGlobal *glob;
+
+} cdb_extract_plan_dependencies_context;
+
 /*
  * Check if a Const node is a regclass value.  We accept plain OID too,
  * since a regclass Const will get folded to that type if it's an argument
@@ -138,6 +146,8 @@ static Plan *cdb_insert_result_node(PlannerGlobal *glob,
 
 static bool extract_query_dependencies_walker(Node *node,
 								  PlannerGlobal *context);
+static bool cdb_extract_plan_dependencies_walker(Node *node,
+									 cdb_extract_plan_dependencies_context *context);
 
 #ifdef USE_ASSERT_CHECKING
 #include "cdb/cdbplan.h"
@@ -1262,6 +1272,12 @@ fix_scan_expr_walker(Node *node, fix_scan_expr_context *context)
 {
 	if (node == NULL)
 		return false;
+
+	/*
+	 * fix_expr_common will look up and set operator opcodes in the
+	 * nodes. That's not needed, as ORCA has set those already, but
+	 * shouldn't do any harm either.
+	 */
 	fix_expr_common(context->glob, node);
 	return expression_tree_walker(node, fix_scan_expr_walker,
 								  (void *) context);
@@ -2372,6 +2388,46 @@ extract_query_dependencies_walker(Node *node, PlannerGlobal *context)
 								 (void *) context, 0);
 	}
 	return expression_tree_walker(node, extract_query_dependencies_walker,
+								  (void *) context);
+}
+
+/*
+ * cdb_extract_plan_dependencies()
+ *		Given a fully built Plan tree, extract their dependencies just as
+ *		set_plan_references_ would have done.
+ *
+ * This is used to extract dependencies from a plan that has been created
+ * by ORCA (set_plan_references() does this usually, but ORCA doesn't use
+ * it). This adds the new entries directly to PlannerGlobal.relationOids
+ * and invalItems.
+ *
+ * Note: This recurses into SubPlans. You better still call this for
+ * every subplan in a overall plan, to make sure you capture dependencies
+ * from subplans that are not referenced from the main plan, because
+ * changes to the relations in eliminated subpland might require
+ * re-planning, too. (XXX: it would be better to not recurse into SubPlans
+ * here, as that's a waste of time.)
+ */
+void
+cdb_extract_plan_dependencies(PlannerGlobal *glob, Plan *plan)
+{
+	cdb_extract_plan_dependencies_context context;
+
+	context.base.node = (Node *) glob;
+	context.glob = glob;
+
+	(void) cdb_extract_plan_dependencies_walker((Node *) plan, &context);
+}
+
+static bool
+cdb_extract_plan_dependencies_walker(Node *node, cdb_extract_plan_dependencies_context *context)
+{
+	if (node == NULL)
+		return false;
+	/* Extract function dependencies and check for regclass Consts */
+	fix_expr_common(context->glob, node);
+
+	return plan_tree_walker(node, cdb_extract_plan_dependencies_walker,
 								  (void *) context);
 }
 

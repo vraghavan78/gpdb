@@ -934,9 +934,15 @@ plan_tree_walker(Node *node,
 		case T_BitmapHeapScan:
 		case T_BitmapAppendOnlyScan:
 		case T_BitmapTableScan:
-		case T_FunctionScan:
 		case T_TableFunctionScan:
 		case T_ValuesScan:
+			if (walk_scan_node_fields((Scan *) node, walker, context))
+				return true;
+			break;
+
+		case T_FunctionScan:
+			if (walker((Node *) ((FunctionScan *) node)->funcexpr, context))
+				return true;
 			if (walk_scan_node_fields((Scan *) node, walker, context))
 				return true;
 			break;

@@ -168,50 +168,6 @@ static void log_optimizer(PlannedStmt *plan, bool fUnexpectedFailure)
 #endif
 
 #ifdef USE_ORCA
-/**
- * Postprocessing of optimizer's plan
- */
-static void postprocess_plan(PlannedStmt *plan)
-{
-	ListCell *lp;
-	PlannerGlobal *globNew =  makeNode(PlannerGlobal);
-
-	/* initialize */
-	globNew->paramlist = NIL;
-	globNew->subrtables = NIL;
-	globNew->rewindPlanIDs = NULL;
-	globNew->finalrtable = plan->rtable;
-	globNew->relationOids = NIL;
-	globNew->invalItems = NIL;
-	globNew->transientPlan = false;
-	globNew->share.sharedNodes = NIL;
-	globNew->share.sliceMarks = NIL;
-	globNew->share.motStack = NIL;
-	globNew->share.qdShares = NIL;
-	globNew->share.qdSlices = NIL;
-	globNew->share.nextPlanId = 0;
-	globNew->subplans = plan->subplans;
-	(void) apply_shareinput_xslice(plan->planTree, globNew);
-
-	/* fix ShareInputScans for EXPLAIN, like in standard_planner(). */
-	foreach(lp, globNew->subplans)
-	{
-		Plan	   *subplan = (Plan *) lfirst(lp);
-		lfirst(lp) = replace_shareinput_targetlists(globNew, subplan);
-	}
-	plan->planTree = replace_shareinput_targetlists(globNew, plan->planTree);
-	/* replace_shareinput_targetlists() adds entries to finalrtable */
-	plan->rtable = globNew->finalrtable;
-
-	/*
-	 * To save on memory, and on the network bandwidth when the plan is dispatched
-	 * QEs, strip all subquery RTEs of the original Query objects.
-	 */
-	remove_subquery_in_RTEs((Node *) plan->rtable);
-}
-#endif
-
-#ifdef USE_ORCA
 /*
  * optimize query using the new optimizer
  */
@@ -219,22 +175,136 @@ static PlannedStmt *
 optimize_query(Query *parse, ParamListInfo boundParams)
 {
 	/* flag to check if optimizer unexpectedly failed to produce a plan */
-	bool fUnexpectedFailure = false;
+	bool		fUnexpectedFailure = false;
+	PlannerGlobal *glob;
+	Query	   *pqueryCopy;
+	PlannedStmt *result;
+	List	   *relationOids;
+	List	   *invalItems;
+	ListCell   *lc;
+	ListCell   *lp;
 
-	/* create a local copy and hand it to the optimizer */
-	Query *pqueryCopy = (Query *) copyObject(parse);
+	/*
+	 * Initialize a dummy PlannerGlobal struct. ORCA doesn't use it, but
+	 * the pre- and post-processing steps do.
+	 */
+	glob = makeNode(PlannerGlobal);
+	glob->paramlist = NIL;
+	glob->subrtables = NIL;
+	glob->rewindPlanIDs = NULL;
+	glob->transientPlan = false;
+	glob->share.sharedNodes = NIL;
+	glob->share.sliceMarks = NIL;
+	glob->share.motStack = NIL;
+	glob->share.qdShares = NIL;
+	glob->share.qdSlices = NIL;
+	glob->share.nextPlanId = 0;
+	/* these will be filled in below, in the pre- and post-processing steps */
+	glob->finalrtable = NIL;
+	glob->subplans = NIL;
+	glob->relationOids = NIL;
+	glob->invalItems = NIL;
 
-	/* perform pre-processing of query tree before calling optimizer */
-	pqueryCopy = preprocess_query_optimizer(pqueryCopy, boundParams);
+	/* create a local copy to hand to the optimizer */
+	pqueryCopy = (Query *) copyObject(parse);
 
-	PlannedStmt *result = PplstmtOptimize(pqueryCopy, &fUnexpectedFailure);
+	/*
+	 * Pre-process the Query tree before calling optimizer. Currently, this
+	 * performs only constant folding.
+	 *
+	 * Constant folding will add dependencies to functions or relations in
+	 * glob->invalItems, for any functions that are inlined or eliminated
+	 * away. (We will find dependencies to other objects later, after planning).
+	 */
+	pqueryCopy = preprocess_query_optimizer(glob, pqueryCopy, boundParams);
 
-	if (result)
-	{
-		postprocess_plan(result);
-	}
+	/* Ok, invoke ORCA. */
+	result = PplstmtOptimize(pqueryCopy, &fUnexpectedFailure);
 
 	log_optimizer(result, fUnexpectedFailure);
+
+	/*
+	 * If ORCA didn't produce a plan, bail out and fall back to the Postgres
+	 * planner.
+	 */
+	if (!result)
+		return NULL;
+
+	/*
+	 * Post-process the plan.
+	 */
+
+	/*
+	 * ORCA filled in the final range table and subplans directly in the
+	 * PlannedStmt. We might need to modify them still, so copy them out
+	 * to the PlannerGlobal struct.
+	 */
+	glob->finalrtable = result->rtable;
+	glob->subplans = result->subplans;
+
+	/* Post-process ShareInputScan nodes */
+	(void) apply_shareinput_xslice(result->planTree, glob);
+
+	/*
+	 * Fix ShareInputScans for EXPLAIN, like in standard_planner(). For all
+	 * subplans first, and then for the main plan tree.
+	 */
+	foreach(lp, glob->subplans)
+	{
+		Plan	   *subplan = (Plan *) lfirst(lp);
+		lfirst(lp) = replace_shareinput_targetlists(glob, subplan);
+	}
+	result->planTree = replace_shareinput_targetlists(glob, result->planTree);
+
+	/*
+	 * To save on memory, and on the network bandwidth when the plan is
+	 * dispatched to QEs, strip all subquery RTEs of the original Query
+	 * objects.
+	 */
+	remove_subquery_in_RTEs((Node *) glob->finalrtable);
+
+	/*
+	 * For plan cache invalidation purposes, extract the OIDs of all
+	 * relations in the final range table, and of all functions used in
+	 * expressions in the plan tree. (In the regular planner, this is done
+	 * in set_plan_references, see that for more comments.)
+	 */
+	foreach(lc, glob->finalrtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+
+		if (rte->rtekind == RTE_RELATION)
+			glob->relationOids = lappend_oid(glob->relationOids,
+											 rte->relid);
+	}
+	foreach(lp, glob->subplans)
+	{
+		Plan	   *subplan = (Plan *) lfirst(lp);
+
+		cdb_extract_plan_dependencies(glob, subplan);
+	}
+	cdb_extract_plan_dependencies(glob, result->planTree);
+
+	/*
+	 * Also extract dependencies from the original Query tree. This is needed
+	 * to capture dependencies to e.g. views, which have been expanded at
+	 * planning to the underlying tables, and don't appear anywhere in the
+	 * resulting plan.
+	 */
+	extract_query_dependencies(list_make1(pqueryCopy),
+							   &relationOids,
+							   &invalItems);
+	glob->relationOids = list_concat(glob->relationOids, relationOids);
+	glob->invalItems = list_concat(glob->invalItems, invalItems);
+
+	/*
+	 * All done! Copy the PlannerGlobal fields that we modified back to the
+	 * PlannedStmt before returning.
+	 */
+	result->rtable = glob->finalrtable;
+	result->subplans = glob->subplans;
+	result->relationOids = glob->relationOids;
+	result->invalItems = glob->invalItems;
 
 	return result;
 }
