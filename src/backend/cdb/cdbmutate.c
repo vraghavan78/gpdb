@@ -2069,10 +2069,28 @@ replace_shareinput_targetlists_walker(Node *node, PlannerGlobal *glob, bool fPop
 		RangeTblEntry *rte;
 		char		buf[100];
 
-		Assert(share_id >= 0 && share_id < list_length(ctxt->sharedNodes));
-
+		/*
+		 * Note that even though the planner assigns sequential share_ids for each
+		 * shared node, so that share_id is always below list_length(ctxt->sharedNodes),
+		 * ORCA has a different assignment scheme. So we have to be prepared for any
+		 * share_id, at least when ORCA is in use.
+		 */
 		if (ctxt->share_refcounts == NULL)
-			ctxt->share_refcounts = palloc0(list_length(ctxt->sharedNodes) * sizeof(int));
+		{
+			int			new_sz = share_id + 1;
+
+			ctxt->share_refcounts = palloc0(new_sz * sizeof(int));
+			ctxt->share_refcounts_sz = new_sz;
+		}
+		else if (share_id >= ctxt->share_refcounts_sz)
+		{
+			int			old_sz = ctxt->share_refcounts_sz;
+			int			new_sz = share_id + 1;
+
+			ctxt->share_refcounts = repalloc(ctxt->share_refcounts, new_sz * sizeof(int));
+			memset(&ctxt->share_refcounts[old_sz], 0, (new_sz - old_sz) * sizeof(int));
+			ctxt->share_refcounts_sz = new_sz;
+		}
 
 		ctxt->share_refcounts[share_id]++;
 
