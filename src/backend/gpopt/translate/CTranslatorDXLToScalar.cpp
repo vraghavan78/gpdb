@@ -1414,6 +1414,7 @@ CTranslatorDXLToScalar::PconstOid
 
 	Const *pconst = MakeNode(Const);
 	pconst->consttype = CMDIdGPDB::PmdidConvert(pdxldatumOid->Pmdid())->OidObjectId();
+	pconst->consttypmod = -1;
 	pconst->constbyval = pdxldatumOid->FByValue();
 	pconst->constisnull = pdxldatumOid->FNull();
 	pconst->constlen = pdxldatumOid->UlLength();
@@ -1449,6 +1450,7 @@ CTranslatorDXLToScalar::PconstInt2
 
 	Const *pconst = MakeNode(Const);
 	pconst->consttype = CMDIdGPDB::PmdidConvert(pdxldatumint2->Pmdid())->OidObjectId();
+	pconst->consttypmod = -1;
 	pconst->constbyval = pdxldatumint2->FByValue();
 	pconst->constisnull = pdxldatumint2->FNull();
 	pconst->constlen = pdxldatumint2->UlLength();
@@ -1484,6 +1486,7 @@ CTranslatorDXLToScalar::PconstInt4
 
 	Const *pconst = MakeNode(Const);
 	pconst->consttype = CMDIdGPDB::PmdidConvert(pdxldatumint4->Pmdid())->OidObjectId();
+	pconst->consttypmod = -1;
 	pconst->constbyval = pdxldatumint4->FByValue();
 	pconst->constisnull = pdxldatumint4->FNull();
 	pconst->constlen = pdxldatumint4->UlLength();
@@ -1518,6 +1521,7 @@ CTranslatorDXLToScalar::PconstInt8
 
 	Const *pconst = MakeNode(Const);
 	pconst->consttype = CMDIdGPDB::PmdidConvert(pdxldatumint8->Pmdid())->OidObjectId();
+	pconst->consttypmod = -1;
 	pconst->constbyval = pdxldatumint8->FByValue();
 	pconst->constisnull = pdxldatumint8->FNull();
 	pconst->constlen = pdxldatumint8->UlLength();
@@ -1552,6 +1556,7 @@ CTranslatorDXLToScalar::PconstBool
 
 	Const *pconst = MakeNode(Const);
 	pconst->consttype = CMDIdGPDB::PmdidConvert(pdxldatumbool->Pmdid())->OidObjectId();
+	pconst->consttypmod = -1;
 	pconst->constbyval = pdxldatumbool->FByValue();
 	pconst->constisnull = pdxldatumbool->FNull();
 	pconst->constlen = pdxldatumbool->UlLength();
@@ -1587,6 +1592,7 @@ CTranslatorDXLToScalar::PconstGeneric
 
 	Const *pconst = MakeNode(Const);
 	pconst->consttype = CMDIdGPDB::PmdidConvert(pdxldatumgeneric->Pmdid())->OidObjectId();
+	pconst->consttypmod = -1;
 	pconst->constbyval = pdxldatumgeneric->FByValue();
 	pconst->constisnull = pdxldatumgeneric->FNull();
 	pconst->constlen = pdxldatumgeneric->UlLength();
