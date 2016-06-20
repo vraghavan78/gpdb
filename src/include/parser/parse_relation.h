@@ -97,4 +97,7 @@ extern int	attnameAttNum(Relation rd, const char *attname, bool sysColOK);
 extern Name attnumAttName(Relation rd, int attid);
 extern Oid	attnumTypeId(Relation rd, int attid);
 
+extern void ExecCheckRTPerms(List *rangeTable);
+extern void ExecCheckRTEPerms(RangeTblEntry *rte);
+
 #endif   /* PARSE_RELATION_H */

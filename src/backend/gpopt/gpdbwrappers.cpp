@@ -2850,9 +2850,6 @@ gpdb::ICdbHashList
 }
 
 // check permissions on range table
-// GPDB_83_MERGE_FIXME: This is a no-op, because we do these permission
-// checks in the executor. I think we can remove this, but I wish someone
-// would confirm.
 void
 gpdb::CheckRTPermissions
 	(
@@ -2861,8 +2858,7 @@ gpdb::CheckRTPermissions
 {
 	GP_WRAP_START;
 	{
-		//ExecCheckRTPerms(plRangeTable);	
-		return;
+		ExecCheckRTPerms(plRangeTable);
 	}
 	GP_WRAP_END;
 }
