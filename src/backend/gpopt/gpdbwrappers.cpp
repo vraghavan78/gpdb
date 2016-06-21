@@ -2859,6 +2859,7 @@ gpdb::CheckRTPermissions
 	GP_WRAP_START;
 	{
 		ExecCheckRTPerms(plRangeTable);
+		return;
 	}
 	GP_WRAP_END;
 }
