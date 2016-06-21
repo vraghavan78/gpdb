@@ -61,8 +61,8 @@ drop role sha256;
 drop view if exists t1_view;
 drop table if exists t1;
 
-drop role if exists superuser;
 drop role if exists u1;
+drop role if exists superuser;
 
 create role superuser;
 create role u1;

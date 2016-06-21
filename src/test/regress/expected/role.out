@@ -88,13 +88,10 @@ drop view if exists t1_view;
 NOTICE:  view "t1_view" does not exist, skipping
 drop table if exists t1;
 NOTICE:  table "t1" does not exist, skipping
-drop role if exists superuser;
-ERROR:  role "superuser" cannot be dropped because some objects depend on it
-DETAIL:  2 objects in database vraghavan
 drop role if exists u1;
+drop role if exists superuser;
 create role superuser;
 NOTICE:  resource queue required -- using default resource queue "pg_default"
-ERROR:  role "superuser" already exists
 create role u1;
 NOTICE:  resource queue required -- using default resource queue "pg_default"
 set role superuser;
