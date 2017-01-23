@@ -1591,6 +1591,21 @@ gpdb::FMemberOid
 	return false;
 }
 
+Oid
+gpdb::LFirstOid
+	(
+	ListCell *lc
+	)
+{
+	GP_WRAP_START;
+	{
+		return lfirst_oid(lc);
+	}
+	GP_WRAP_END;
+	return 0;
+}
+
+
 void
 gpdb::FreeList
 	(
