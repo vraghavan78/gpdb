@@ -80,13 +80,10 @@ CCTEListEntry::CCTEListEntry
 	m_phmszcteinfo = GPOS_NEW(pmp) HMSzCTEInfo(pmp);
 	const ULONG ulCTEs = pdrgpdxln->UlLength();
 	
-	ULONG ul = 0;
-	ListCell *plc = NULL;
-	ForEach (plc, plCTE)
+	for (ULONG ul = 0; ul < ulCTEs; ul++)
 	{
 		CDXLNode *pdxlnCTEProducer = (*pdrgpdxln)[ul];
-		CommonTableExpr *pcte = (CommonTableExpr*) lfirst(plc);
-		ul++;
+		CommonTableExpr *pcte = (CommonTableExpr*) gpdb::PvListNth(plCTE, ul);
 
 		Query *pqueryCTE = (Query*) pcte->ctequery;
 		
