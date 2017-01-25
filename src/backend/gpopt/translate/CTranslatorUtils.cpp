@@ -355,7 +355,7 @@ CTranslatorUtils::PdrgpmdidResolvePolymorphicTypes
 	ListCell *plcArgType = NULL;
 	ForEach (plcArgType, plArgTypes)
 	{
-		argTypes[ulArgIndex] = gpdb::LFirstOid(plcArgType);
+		argTypes[ulArgIndex] = lfirst_oid(plcArgType);
 		argModes[ulArgIndex++] = PROARGMODE_IN;
 	}
 

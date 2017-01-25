@@ -363,9 +363,6 @@ namespace gpdb {
 	// check whether the given oid is a member of the given list
 	bool FMemberOid(List *list, Oid oid);
 
-	// return the first oid
-	Oid LFirstOid(ListCell *lc);
-
 	// free list
 	void FreeList(List *plist);
 	
