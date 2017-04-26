@@ -476,8 +476,6 @@ bool		optimizer_print_expression_properties;
 bool		optimizer_print_group_properties;
 bool		optimizer_print_optimization_context;
 bool		optimizer_print_optimization_stats;
-bool		optimizer_local;
-int			optimizer_retries;
 /* array of xforms disable flags */
 bool		optimizer_xforms[OPTIMIZER_XFORMS_COUNT] = {[0 ... OPTIMIZER_XFORMS_COUNT - 1] = false};
 char	   *optimizer_search_strategy_path = NULL;
