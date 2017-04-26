@@ -467,14 +467,12 @@ extern double optimizer_damping_factor_groupby;
 extern bool optimizer_dpe_stats;
 extern bool optimizer_enable_derive_stats_all_groups;
 
-/* Costing related GUCs used by the Optimizer */
+/* Costing or tuning related GUCs used by the Optimizer */
 extern int optimizer_segments;
 extern int optimizer_penalize_broadcast_threshold;
 extern double optimizer_cost_threshold;
 extern double optimizer_nestloop_factor;
 extern double optimizer_sort_factor;
-
-/* Optimizer tuning knobs */
 extern int optimizer_array_expansion_threshold;
 extern int optimizer_join_order_threshold;
 extern int optimizer_join_arity_for_associativity_commutativity;

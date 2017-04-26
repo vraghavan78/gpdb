@@ -539,14 +539,12 @@ double		optimizer_damping_factor_groupby;
 bool		optimizer_dpe_stats;
 bool		optimizer_enable_derive_stats_all_groups;
 
-/* Costing related GUCs used by the Optimizer */
+/* Costing or tuning related GUCs used by the Optimizer */
 int			optimizer_segments;
 int			optimizer_penalize_broadcast_threshold;
 double		optimizer_cost_threshold;
 double		optimizer_nestloop_factor;
 double		optimizer_sort_factor;
-
-/* Optimizer tuning knobs */
 int			optimizer_join_arity_for_associativity_commutativity;
 int         optimizer_array_expansion_threshold;
 int         optimizer_join_order_threshold;
@@ -4462,7 +4460,7 @@ struct config_int ConfigureNamesInt_gp[] =
 	},
 
 	{
-		{"optimizer_cte_inlining_bound", PGC_USERSET, DEVELOPER_OPTIONS,
+		{"optimizer_cte_inlining_bound", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Set the CTE inlining cutoff"),
 			NULL,
 			GUC_GPDB_ADDOPT | GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
@@ -4764,7 +4762,7 @@ struct config_real ConfigureNamesReal_gp[] =
 
 	{
 		{"optimizer_cost_threshold", PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("set the threshold for plan smapling relative to the cost of best plan, 0.0 means unbounded"),
+			gettext_noop("Set the threshold for plan sampling relative to the cost of best plan, 0.0 means unbounded"),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
@@ -4773,8 +4771,8 @@ struct config_real ConfigureNamesReal_gp[] =
 	},
 
 	{
-		{"optimizer_nestloop_factor", PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("set the nestloop join cost factor in the optimizer"),
+		{"optimizer_nestloop_factor", PGC_USERSET, QUERY_TUNING_OTHER,
+			gettext_noop("Set the nestloop join cost factor in the optimizer"),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
@@ -4783,8 +4781,8 @@ struct config_real ConfigureNamesReal_gp[] =
 	},
 
 	{
-		{"optimizer_sort_factor",PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("set the sort cost factor in the optimizer, 1.0 means same as default, > 1.0 means more costly than default, < 1.0 means means less costly than default"),
+		{"optimizer_sort_factor",PGC_USERSET, QUERY_TUNING_OTHER,
+			gettext_noop("Set the sort cost factor in the optimizer, 1.0 means same as default, > 1.0 means more costly than default, < 1.0 means means less costly than default"),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
@@ -4889,7 +4887,7 @@ struct config_string ConfigureNamesString_gp[] =
 	},
 
 	{
-		{"optimizer_cost_model", PGC_USERSET, LOGGING_WHEN,
+		{"optimizer_cost_model", PGC_USERSET, DEVELOPER_OPTIONS,
 			gettext_noop("Set optimizer cost model."),
 			gettext_noop("Valid values are legacy, calibrated"),
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
