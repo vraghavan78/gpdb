@@ -2914,7 +2914,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 			NULL
 		},
 		&optimizer_analyze_root_partition,
-		false, NULL, NULL
+		true, NULL, NULL
 	},
 
 	{
