@@ -383,18 +383,21 @@ extern char  *data_directory;
 #define OPTIMIZER_GPDB_LEGACY           0       /* GPDB's legacy cost model */
 #define OPTIMIZER_GPDB_CALIBRATED       1       /* GPDB's calibrated cost model */
 
-// ORCA-related gucs
+/* Optimizer related gucs */
 extern bool	optimizer;
+extern bool optimizer_control;	/* controls whether the user can change the setting of the "optimizer" guc */
 extern bool	optimizer_log;
+extern int  optimizer_log_failure;
 extern bool	optimizer_trace_fallback;
 extern bool optimizer_minidump;
 extern int  optimizer_cost_model;
+extern bool optimizer_metadata_caching;
+extern int	optimizer_mdcache_size;
+
+/* Optimizer debugging GUCs */
 extern bool optimizer_print_query;
 extern bool optimizer_print_plan;
 extern bool optimizer_print_xform;
-extern bool optimizer_metadata_caching;
-extern int optimizer_mdcache_size;
-extern bool optimizer_disable_xform_result_printing;
 extern bool	optimizer_print_memo_after_exploration;
 extern bool	optimizer_print_memo_after_implementation;
 extern bool	optimizer_print_memo_after_optimization;
@@ -403,12 +406,14 @@ extern bool	optimizer_print_expression_properties;
 extern bool	optimizer_print_group_properties;
 extern bool	optimizer_print_optimization_context;
 extern bool optimizer_print_optimization_stats;
-extern bool  optimizer_xforms[OPTIMIZER_XFORMS_COUNT];
+extern bool optimizer_disable_xform_result_printing;
+
+/* array of xforms disable flags */
+extern bool optimizer_xforms[OPTIMIZER_XFORMS_COUNT];
 extern char *optimizer_search_strategy_path;
 extern bool optimizer_extract_dxl_stats;
 extern bool optimizer_extract_dxl_stats_all_nodes;
 extern bool optimizer_disable_missing_stats_collection;
-extern bool optimizer_dpe_stats;
 extern bool optimizer_enable_indexjoin;
 extern bool optimizer_enable_motions_masteronly_queries;
 extern bool optimizer_enable_motions;
@@ -431,26 +436,6 @@ extern bool optimizer_enable_hashjoin_redistribute_broadcast_children;
 extern bool optimizer_enable_broadcast_nestloop_outer_child;
 extern bool optimizer_enforce_subplans;
 extern bool optimizer_enable_assert_maxonerow;
-extern bool optimizer_enumerate_plans;
-extern bool optimizer_sample_plans;
-extern int	optimizer_plan_id;
-extern int	optimizer_samples_number;
-extern int optimizer_log_failure;
-extern double optimizer_cost_threshold;
-extern double optimizer_nestloop_factor;
-extern double optimizer_sort_factor;
-extern bool optimizer_cte_inlining;
-extern int optimizer_cte_inlining_bound;
-extern double optimizer_damping_factor_filter;
-extern double optimizer_damping_factor_join;
-extern double optimizer_damping_factor_groupby;
-extern int optimizer_segments;
-extern int optimizer_join_arity_for_associativity_commutativity;
-extern int optimizer_penalize_broadcast_threshold;
-extern int optimizer_array_expansion_threshold;
-extern int optimizer_join_order_threshold;
-extern bool optimizer_analyze_root_partition;
-extern bool optimizer_analyze_midlevel_partition;
 extern bool optimizer_enable_constant_expression_evaluation;
 extern bool optimizer_use_external_constant_expression_evaluation_for_ints;
 extern bool optimizer_enable_bitmapscan;
@@ -462,13 +447,43 @@ extern bool optimizer_enable_partial_index;
 extern bool optimizer_dml_triggers;
 extern bool	optimizer_dml_constraints;
 extern bool optimizer_direct_dispatch;
-extern bool optimizer_control;	/* controls whether the user can change the setting of the "optimizer" guc */
 extern bool optimizer_enable_master_only_queries;
 extern bool optimizer_multilevel_partitioning;
-extern bool optimizer_enable_derive_stats_all_groups;
 extern bool optimizer_prefer_scalar_dqa_multistage_agg;
 extern bool optimizer_parallel_union;
 extern bool optimizer_array_constraints;
+extern bool optimizer_cte_inlining;
+
+/* Optimizer plan enumeration related GUCs */
+extern bool optimizer_enumerate_plans;
+extern bool optimizer_sample_plans;
+extern int	optimizer_plan_id;
+extern int	optimizer_samples_number;
+
+/* Cardinality estimation related GUCs used by the Optimizer */
+extern double optimizer_damping_factor_filter;
+extern double optimizer_damping_factor_join;
+extern double optimizer_damping_factor_groupby;
+extern bool optimizer_dpe_stats;
+extern bool optimizer_enable_derive_stats_all_groups;
+
+/* Costing related GUCs used by the Optimizer */
+extern int optimizer_segments;
+extern int optimizer_penalize_broadcast_threshold;
+extern double optimizer_cost_threshold;
+extern double optimizer_nestloop_factor;
+extern double optimizer_sort_factor;
+
+/* Optimizer tuning knobs */
+extern int optimizer_array_expansion_threshold;
+extern int optimizer_join_order_threshold;
+extern int optimizer_join_arity_for_associativity_commutativity;
+extern int optimizer_cte_inlining_bound;
+
+/* Analyze related GUCs for Optimizer */
+extern bool optimizer_analyze_root_partition;
+extern bool optimizer_analyze_midlevel_partition;
+
 
 /**
  * GUCs related to code generation.

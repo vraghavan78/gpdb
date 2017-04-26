@@ -454,20 +454,22 @@ bool		gp_log_dynamic_partition_pruning = false;
 bool		gp_cte_sharing = false;
 bool		gp_enable_relsize_collection = false;
 
-/* ORCA related gucs */
-bool		optimizer_control = true;
+/* Optimizer related gucs */
 bool		optimizer;
 bool		optimizer_log;
+int			optimizer_log_failure;
+bool		optimizer_control = true;
 bool		optimizer_trace_fallback;
 bool		optimizer_partition_selection_log;
 bool		optimizer_minidump;
 int			optimizer_cost_model;
+bool		optimizer_metadata_caching;
+int			optimizer_mdcache_size;
+
+/* Optimizer debugging GUCs */
 bool		optimizer_print_query;
 bool		optimizer_print_plan;
 bool		optimizer_print_xform;
-bool		optimizer_metadata_caching;
-int		optimizer_mdcache_size;
-bool		optimizer_disable_xform_result_printing;
 bool		optimizer_print_memo_after_exploration;
 bool		optimizer_print_memo_after_implementation;
 bool		optimizer_print_memo_after_optimization;
@@ -476,6 +478,8 @@ bool		optimizer_print_expression_properties;
 bool		optimizer_print_group_properties;
 bool		optimizer_print_optimization_context;
 bool		optimizer_print_optimization_stats;
+bool		optimizer_disable_xform_result_printing;
+
 /* array of xforms disable flags */
 bool		optimizer_xforms[OPTIMIZER_XFORMS_COUNT] = {[0 ... OPTIMIZER_XFORMS_COUNT - 1] = false};
 char	   *optimizer_search_strategy_path = NULL;
@@ -483,7 +487,6 @@ char	   *gp_idf_deduplicate_str;
 bool		optimizer_extract_dxl_stats;
 bool		optimizer_extract_dxl_stats_all_nodes;
 bool		optimizer_disable_missing_stats_collection;
-bool		optimizer_dpe_stats;
 bool		optimizer_enable_indexjoin;
 bool		optimizer_enable_motions_masteronly_queries;
 bool		optimizer_enable_motions;
@@ -506,26 +509,6 @@ bool		optimizer_enable_hashjoin_redistribute_broadcast_children;
 bool		optimizer_enable_broadcast_nestloop_outer_child;
 bool		optimizer_enforce_subplans;
 bool		optimizer_enable_assert_maxonerow;
-bool		optimizer_enumerate_plans;
-bool		optimizer_sample_plans;
-int			optimizer_plan_id;
-int			optimizer_samples_number;
-int			optimizer_log_failure;
-double		optimizer_cost_threshold;
-double		optimizer_nestloop_factor;
-double		optimizer_sort_factor;
-bool		optimizer_cte_inlining;
-int			optimizer_cte_inlining_bound;
-double		optimizer_damping_factor_filter;
-double		optimizer_damping_factor_join;
-double		optimizer_damping_factor_groupby;
-int			optimizer_segments;
-int			optimizer_join_arity_for_associativity_commutativity;
-int			optimizer_penalize_broadcast_threshold;
-int         optimizer_array_expansion_threshold;
-int         optimizer_join_order_threshold;
-bool		optimizer_analyze_root_partition;
-bool		optimizer_analyze_midlevel_partition;
 bool		optimizer_enable_constant_expression_evaluation;
 bool		optimizer_use_external_constant_expression_evaluation_for_ints;
 bool		optimizer_enable_bitmapscan;
@@ -538,10 +521,40 @@ bool		optimizer_dml_triggers;
 bool		optimizer_dml_constraints;
 bool		optimizer_enable_master_only_queries;
 bool		optimizer_multilevel_partitioning;
-bool		optimizer_enable_derive_stats_all_groups;
 bool		optimizer_prefer_scalar_dqa_multistage_agg;
 bool 		optimizer_parallel_union;
 bool		optimizer_array_constraints;
+bool		optimizer_cte_inlining;
+
+/* Optimizer plan enumeration related GUCs */
+bool		optimizer_enumerate_plans;
+bool		optimizer_sample_plans;
+int			optimizer_plan_id;
+int			optimizer_samples_number;
+
+/* Cardinality estimation related GUCs used by the Optimizer */
+double		optimizer_damping_factor_filter;
+double		optimizer_damping_factor_join;
+double		optimizer_damping_factor_groupby;
+bool		optimizer_dpe_stats;
+bool		optimizer_enable_derive_stats_all_groups;
+
+/* Costing related GUCs used by the Optimizer */
+int			optimizer_segments;
+int			optimizer_penalize_broadcast_threshold;
+double		optimizer_cost_threshold;
+double		optimizer_nestloop_factor;
+double		optimizer_sort_factor;
+
+/* Optimizer tuning knobs */
+int			optimizer_join_arity_for_associativity_commutativity;
+int         optimizer_array_expansion_threshold;
+int         optimizer_join_order_threshold;
+int			optimizer_cte_inlining_bound;
+
+/* Analyze related GUCs for Optimizer */
+bool		optimizer_analyze_root_partition;
+bool		optimizer_analyze_midlevel_partition;
 
 /**
  * GUCs related to code generation.
