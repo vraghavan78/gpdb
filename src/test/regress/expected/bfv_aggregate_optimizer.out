@@ -176,14 +176,14 @@ insert into multi_stage_test select i, i%4 from generate_series(1,10) i;
 analyze multi_stage_test;
 -- TEST
 set optimizer_segments=2;
-set optimizer_prefer_multistage_agg = on;
+set optimizer_force_multistage_agg = on;
 select count_operator('select count(*) from multi_stage_test group by b;','GroupAggregate');
  count_operator 
 ----------------
               2
 (1 row)
 
-set optimizer_prefer_multistage_agg = off;
+set optimizer_force_multistage_agg = off;
 select count_operator('select count(*) from multi_stage_test group by b;','GroupAggregate');
  count_operator 
 ----------------
@@ -192,7 +192,7 @@ select count_operator('select count(*) from multi_stage_test group by b;','Group
 
 --CLEANUP
 reset optimizer_segments;
-set optimizer_prefer_multistage_agg = off;
+set optimizer_force_multistage_agg = off;
 --
 -- Testing not picking HashAgg for aggregates without preliminary functions
 --

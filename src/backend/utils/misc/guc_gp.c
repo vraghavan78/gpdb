@@ -478,15 +478,14 @@ bool		optimizer_print_expression_properties;
 bool		optimizer_print_group_properties;
 bool		optimizer_print_optimization_context;
 bool		optimizer_print_optimization_stats;
-bool		optimizer_disable_xform_result_printing;
+bool		optimizer_print_xform_results;
 
 /* array of xforms disable flags */
 bool		optimizer_xforms[OPTIMIZER_XFORMS_COUNT] = {[0 ... OPTIMIZER_XFORMS_COUNT - 1] = false};
 char	   *optimizer_search_strategy_path = NULL;
 char	   *gp_idf_deduplicate_str;
-bool		optimizer_extract_dxl_stats;
-bool		optimizer_extract_dxl_stats_all_nodes;
-bool		optimizer_disable_missing_stats_collection;
+
+/* GUCs to tell Optimizer to enable a physical operator*/
 bool		optimizer_enable_indexjoin;
 bool		optimizer_enable_motions_masteronly_queries;
 bool		optimizer_enable_motions;
@@ -499,32 +498,19 @@ bool		optimizer_enable_partition_propagation;
 bool		optimizer_enable_partition_selection;
 bool		optimizer_enable_outerjoin_rewrite;
 bool		optimizer_enable_space_pruning;
-bool		optimizer_prefer_multistage_agg;
 bool		optimizer_enable_multiple_distinct_aggs;
-bool		optimizer_prefer_expanded_distinct_aggs;
-bool		optimizer_prune_computed_columns;
-bool		optimizer_push_requirements_from_consumer_to_producer;
-bool		optimizer_direct_dispatch;
+bool		optimizer_enable_direct_dispatch;
 bool		optimizer_enable_hashjoin_redistribute_broadcast_children;
 bool		optimizer_enable_broadcast_nestloop_outer_child;
-bool		optimizer_enforce_subplans;
 bool		optimizer_enable_assert_maxonerow;
 bool		optimizer_enable_constant_expression_evaluation;
-bool		optimizer_use_external_constant_expression_evaluation_for_ints;
 bool		optimizer_enable_bitmapscan;
 bool		optimizer_enable_outerjoin_to_unionall_rewrite;
-bool		optimizer_apply_left_outer_to_union_all_disregarding_stats;
 bool		optimizer_enable_ctas;
-bool		optimizer_remove_order_below_dml;
 bool		optimizer_enable_partial_index;
-bool		optimizer_dml_triggers;
-bool		optimizer_dml_constraints;
+bool		optimizer_enable_dml_triggers;
+bool		optimizer_enable_dml_constraints;
 bool		optimizer_enable_master_only_queries;
-bool		optimizer_multilevel_partitioning;
-bool		optimizer_prefer_scalar_dqa_multistage_agg;
-bool 		optimizer_parallel_union;
-bool		optimizer_array_constraints;
-bool		optimizer_cte_inlining;
 
 /* Optimizer plan enumeration related GUCs */
 bool		optimizer_enumerate_plans;
@@ -533,22 +519,40 @@ int			optimizer_plan_id;
 int			optimizer_samples_number;
 
 /* Cardinality estimation related GUCs used by the Optimizer */
+bool		optimizer_extract_dxl_stats;
+bool		optimizer_extract_dxl_stats_all_nodes;
+bool		optimizer_disable_missing_stats_collection;
 double		optimizer_damping_factor_filter;
 double		optimizer_damping_factor_join;
 double		optimizer_damping_factor_groupby;
 bool		optimizer_dpe_stats;
 bool		optimizer_enable_derive_stats_all_groups;
 
-/* Costing or tuning related GUCs used by the Optimizer */
+/* Costing related GUCs used by the Optimizer */
 int			optimizer_segments;
 int			optimizer_penalize_broadcast_threshold;
 double		optimizer_cost_threshold;
 double		optimizer_nestloop_factor;
 double		optimizer_sort_factor;
+
+/* Optimizer hints */
 int			optimizer_join_arity_for_associativity_commutativity;
 int         optimizer_array_expansion_threshold;
 int         optimizer_join_order_threshold;
 int			optimizer_cte_inlining_bound;
+bool		optimizer_force_multistage_agg;
+bool		optimizer_force_scalar_dqa_multistage_agg;
+bool		optimizer_force_expanded_distinct_aggs;
+bool		optimizer_prune_computed_columns;
+bool		optimizer_push_requirements_from_consumer_to_producer;
+bool		optimizer_enforce_subplans;
+bool		optimizer_use_external_constant_expression_evaluation_for_ints;
+bool		optimizer_apply_left_outer_to_union_all_disregarding_stats;
+bool		optimizer_remove_order_below_dml;
+bool		optimizer_multilevel_partitioning;
+bool 		optimizer_parallel_union;
+bool		optimizer_array_constraints;
+bool		optimizer_cte_inlining;
 
 /* Analyze related GUCs for Optimizer */
 bool		optimizer_analyze_root_partition;
@@ -2529,12 +2533,12 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		{"optimizer_disable_xform_result_printing", PGC_USERSET, LOGGING_WHAT,
-			gettext_noop("Disable printing the input and output of optimizer transformations."),
+		{"optimizer_print_xform_results", PGC_USERSET, LOGGING_WHAT,
+			gettext_noop("Print the input and output of optimizer transformations."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-		&optimizer_disable_xform_result_printing,
+		&optimizer_print_xform_results,
 		false, NULL, NULL
 	},
 
@@ -2745,12 +2749,12 @@ struct config_bool ConfigureNamesBool_gp[] =
 		true, NULL, NULL
 	},
 	{
-		{"optimizer_direct_dispatch", PGC_USERSET, DEVELOPER_OPTIONS,
+		{"optimizer_enable_direct_dispatch", PGC_USERSET, DEVELOPER_OPTIONS,
 			gettext_noop("Enable direct dispatch in the optimizer."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-		&optimizer_direct_dispatch,
+		&optimizer_enable_direct_dispatch,
 		true, NULL, NULL
 	},
 	{
@@ -2802,12 +2806,12 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		{"optimizer_prefer_multistage_agg", PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("Prefer multistage aggregates in the optimizer."),
+		{"optimizer_force_multistage_agg", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Always pick multistage aggregates when such a plan is generated by optimizer."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-		&optimizer_prefer_multistage_agg,
+		&optimizer_force_multistage_agg,
 		true, NULL, NULL
 	},
 
@@ -2822,12 +2826,12 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		{"optimizer_prefer_expanded_distinct_aggs", PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("Prefer plans that expand multiple distinct aggregates into join of single distinct aggregate in the optimizer."),
+		{"optimizer_force_expanded_distinct_aggs", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Always pick plans that expand multiple distinct aggregates into join of single distinct aggregate in the optimizer."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-		&optimizer_prefer_expanded_distinct_aggs,
+		&optimizer_force_expanded_distinct_aggs,
 		true, NULL, NULL
 	},
 
@@ -3017,22 +3021,22 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		{"optimizer_dml_triggers", PGC_USERSET, DEVELOPER_OPTIONS,
+		{"optimizer_enable_dml_triggers", PGC_USERSET, DEVELOPER_OPTIONS,
 			gettext_noop("Support DML with triggers."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-		&optimizer_dml_triggers,
+		&optimizer_enable_dml_triggers,
 		false, NULL, NULL
 	},
 
 	{
-		{"optimizer_dml_constraints", PGC_USERSET, DEVELOPER_OPTIONS,
+		{"optimizer_enable_dml_constraints", PGC_USERSET, DEVELOPER_OPTIONS,
 			gettext_noop("Support DML with CHECK constraints and NOT NULL constraints."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-		&optimizer_dml_constraints,
+		&optimizer_enable_dml_constraints,
 		true, NULL, NULL
 	},
 
@@ -3078,12 +3082,12 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		{"optimizer_prefer_scalar_dqa_multistage_agg", PGC_USERSET, DEVELOPER_OPTIONS,
-			gettext_noop("Prefer multistage aggregates for scalar distinct qualified aggregate in the optimizer."),
+		{"optimizer_force_scalar_dqa_multistage_agg", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Always pick multistage aggregates for scalar distinct qualified aggregate in the optimizer."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-		&optimizer_prefer_scalar_dqa_multistage_agg,
+		&optimizer_force_scalar_dqa_multistage_agg,
 		true, NULL, NULL
 	},
 

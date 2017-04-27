@@ -117,15 +117,15 @@ analyze multi_stage_test;
 
 -- TEST
 set optimizer_segments=2;
-set optimizer_prefer_multistage_agg = on;
+set optimizer_force_multistage_agg = on;
 select count_operator('select count(*) from multi_stage_test group by b;','GroupAggregate');
 
-set optimizer_prefer_multistage_agg = off;
+set optimizer_force_multistage_agg = off;
 select count_operator('select count(*) from multi_stage_test group by b;','GroupAggregate');
 
 --CLEANUP
 reset optimizer_segments;
-set optimizer_prefer_multistage_agg = off;
+set optimizer_force_multistage_agg = off;
 
 --
 -- Testing not picking HashAgg for aggregates without preliminary functions
