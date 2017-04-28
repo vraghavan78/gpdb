@@ -216,10 +216,10 @@ CConfigParamMapping::SConfigMappingElem CConfigParamMapping::m_elem[] =
 		},
 
 		{
-		EopttraceDonotCollectMissingStatsCols,
-		&optimizer_disable_missing_stats_collection,
+		EopttracePrintColsWithMissingStats,
+		&optimizer_print_missing_stats,
 		false, // m_fNegate
-		GPOS_WSZ_LIT("Disable collection of columns with missing statistics.")
+		GPOS_WSZ_LIT("Print columns with missing missing statistics.")
 		},
 
 		{

@@ -520,7 +520,7 @@ int			optimizer_samples_number;
 /* Cardinality estimation related GUCs used by the Optimizer */
 bool		optimizer_extract_dxl_stats;
 bool		optimizer_extract_dxl_stats_all_nodes;
-bool		optimizer_disable_missing_stats_collection;
+bool		optimizer_print_missing_stats;
 double		optimizer_damping_factor_filter;
 double		optimizer_damping_factor_join;
 double		optimizer_damping_factor_groupby;
@@ -2523,12 +2523,12 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		{"optimizer_disable_missing_stats_collection", PGC_USERSET, LOGGING_WHAT,
-			gettext_noop("Disable collecting of columns with missing statistics."),
+		{"optimizer_print_missing_stats", PGC_USERSET, LOGGING_WHAT,
+			gettext_noop("Print columns with missing missing statistics."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-		&optimizer_disable_missing_stats_collection,
+		&optimizer_print_missing_stats,
 		false, NULL, NULL
 	},
 

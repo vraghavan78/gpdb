@@ -33,7 +33,7 @@ CREATE TABLE distxact1_4 (a int) DISTRIBUTED BY (a);
 COMMIT;
 -- end_ignore
 
-SET optimizer_disable_missing_stats_collection=true;
+SET optimizer_print_missing_stats=true;
 BEGIN;
 INSERT INTO distxact1_1 VALUES (1);
 INSERT INTO distxact1_1 VALUES (2);

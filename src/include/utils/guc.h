@@ -447,7 +447,7 @@ extern int	optimizer_samples_number;
 /* Cardinality estimation related GUCs used by the Optimizer */
 extern bool optimizer_extract_dxl_stats;
 extern bool optimizer_extract_dxl_stats_all_nodes;
-extern bool optimizer_disable_missing_stats_collection;
+extern bool optimizer_print_missing_stats;
 extern double optimizer_damping_factor_filter;
 extern double optimizer_damping_factor_join;
 extern double optimizer_damping_factor_groupby;
