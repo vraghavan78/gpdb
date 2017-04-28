@@ -497,7 +497,6 @@ bool		optimizer_enable_materialize;
 bool		optimizer_enable_partition_propagation;
 bool		optimizer_enable_partition_selection;
 bool		optimizer_enable_outerjoin_rewrite;
-bool		optimizer_enable_space_pruning;
 bool		optimizer_enable_multiple_distinct_aggs;
 bool		optimizer_enable_direct_dispatch;
 bool		optimizer_enable_hashjoin_redistribute_broadcast_children;
@@ -553,6 +552,7 @@ bool		optimizer_multilevel_partitioning;
 bool 		optimizer_parallel_union;
 bool		optimizer_array_constraints;
 bool		optimizer_cte_inlining;
+bool		optimizer_enable_space_pruning;
 
 /* Analyze related GUCs for Optimizer */
 bool		optimizer_analyze_root_partition;

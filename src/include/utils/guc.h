@@ -424,7 +424,6 @@ extern bool optimizer_enable_materialize;
 extern bool optimizer_enable_partition_propagation;
 extern bool optimizer_enable_partition_selection;
 extern bool optimizer_enable_outerjoin_rewrite;
-extern bool optimizer_enable_space_pruning;
 extern bool optimizer_enable_multiple_distinct_aggs;
 extern bool optimizer_enable_hashjoin_redistribute_broadcast_children;
 extern bool optimizer_enable_broadcast_nestloop_outer_child;
@@ -480,6 +479,7 @@ extern bool optimizer_multilevel_partitioning;
 extern bool optimizer_parallel_union;
 extern bool optimizer_array_constraints;
 extern bool optimizer_cte_inlining;
+extern bool optimizer_enable_space_pruning;
 
 /* Analyze related GUCs for Optimizer */
 extern bool optimizer_analyze_root_partition;
