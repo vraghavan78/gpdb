@@ -3,7 +3,6 @@
 --
 -- start_ignore
 set optimizer_log=on;
-set optimizer_print_missing_stats=on;
 -- end_ignore
 
 set test_print_direct_dispatch_info=on; 

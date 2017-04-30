@@ -1,7 +1,6 @@
 --
 -- Cursor regression tests
 --
-SET optimizer_print_missing_stats=true;
 BEGIN;
 
 DECLARE foo1 SCROLL CURSOR FOR SELECT * FROM tenk1 ORDER BY unique2;

@@ -132,7 +132,6 @@ set optimizer_force_multistage_agg = off;
 --
 
 -- SETUP
-SET optimizer_print_missing_stats=on;
 CREATE TABLE attribute_table (product_id integer, attribute_id integer,attribute text, attribute2 text,attribute_ref_lists text,short_name text,attribute6 text,attribute5 text,measure double precision,unit character varying(60)) DISTRIBUTED BY (product_id ,attribute_id);
 -- create the transition function
 CREATE OR REPLACE FUNCTION do_concat(text,text)
@@ -159,8 +158,6 @@ UPDATE pg_class set reltuples=524592::real, relpages=2708::integer where oid = '
 select count_operator('select product_id,concat(E''#attribute_''||attribute_id::varchar||E'':''||attribute) as attr FROM attribute_table GROUP BY product_id;','HashAggregate');
 
 -- CLEANUP
-SET optimizer_print_missing_stats=off;
-
 
 --
 -- Testing fallback to planner when the agg used in window does not have either prelim or inverse prelim function.

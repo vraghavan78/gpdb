@@ -1,4 +1,3 @@
-set optimizer_print_missing_stats = on;
 drop table if exists ctas_src;
 drop table if exists ctas_dst;
 
