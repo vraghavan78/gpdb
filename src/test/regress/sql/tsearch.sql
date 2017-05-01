@@ -1,3 +1,4 @@
+set optimizer_print_missing_stats = off;
 --
 -- Sanity checks for text search catalogs
 --

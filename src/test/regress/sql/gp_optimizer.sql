@@ -895,7 +895,6 @@ with x as (select * from foo_missing_stats) select count(*) from x x1, x x2 wher
 with x as (select * from foo_missing_stats) select count(*) from x x1, x x2 where x1.a = x2.b;
 
 set allow_system_table_mods="DML";
-set optimizer_print_missing_stats = on;
 delete from pg_statistic where starelid='foo_missing_stats'::regclass;
 delete from pg_statistic where starelid='bar_missing_stats'::regclass;
 

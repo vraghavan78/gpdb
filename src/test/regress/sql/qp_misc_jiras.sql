@@ -1,5 +1,6 @@
 set DateStyle="ISO, MDY";
 set gp_create_table_random_default_distribution=off;
+set optimizer_print_missing_stats = off;
 create schema qp_misc_jiras;
 
 

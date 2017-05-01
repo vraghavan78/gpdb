@@ -1,3 +1,4 @@
+set optimizer_print_missing_stats = off;
 --
 -- This test case covers ALTER functionality for AOCS relations.
 --
