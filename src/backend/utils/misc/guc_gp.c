@@ -483,7 +483,6 @@ bool		optimizer_print_xform_results;
 /* array of xforms disable flags */
 bool		optimizer_xforms[OPTIMIZER_XFORMS_COUNT] = {[0 ... OPTIMIZER_XFORMS_COUNT - 1] = false};
 char	   *optimizer_search_strategy_path = NULL;
-char	   *gp_idf_deduplicate_str;
 
 /* GUCs to tell Optimizer to enable a physical operator */
 bool		optimizer_enable_indexjoin;
