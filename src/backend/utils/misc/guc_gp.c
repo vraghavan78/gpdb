@@ -485,7 +485,7 @@ bool		optimizer_xforms[OPTIMIZER_XFORMS_COUNT] = {[0 ... OPTIMIZER_XFORMS_COUNT 
 char	   *optimizer_search_strategy_path = NULL;
 char	   *gp_idf_deduplicate_str;
 
-/* GUCs to tell Optimizer to enable a physical operator*/
+/* GUCs to tell Optimizer to enable a physical operator */
 bool		optimizer_enable_indexjoin;
 bool		optimizer_enable_motions_masteronly_queries;
 bool		optimizer_enable_motions;
@@ -2524,7 +2524,7 @@ struct config_bool ConfigureNamesBool_gp[] =
 
 	{
 		{"optimizer_print_missing_stats", PGC_USERSET, LOGGING_WHAT,
-			gettext_noop("Print columns with missing missing statistics."),
+			gettext_noop("Print columns with missing statistics."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
