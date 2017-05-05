@@ -48,63 +48,63 @@ CConfigParamMapping::SConfigMappingElem CConfigParamMapping::m_elem[] =
 		},
 
 		{
-		EopttracePrintXformRes,
+		EopttracePrintXformResults,
 		&optimizer_print_xform_results,
 		false, // m_fNegate
 		GPOS_WSZ_LIT("Print input and output of xforms.")
 		},
 
 		{
-		EopttracePrintMemoExplrd,
+		EopttracePrintMemoAfterExploration,
 		&optimizer_print_memo_after_exploration,
 		false, // m_fNegate
 		GPOS_WSZ_LIT("Prints MEMO after exploration.")
 		},
 
 		{
-		EopttracePrintMemoImpld,
+		EopttracePrintMemoAfterImplementation,
 		&optimizer_print_memo_after_implementation,
 		false, // m_fNegate
 		GPOS_WSZ_LIT("Prints MEMO after implementation.")
 		},
 
 		{
-		EopttracePrintMemoOptd,
+		EopttracePrintMemoAfterOptimization,
 		&optimizer_print_memo_after_optimization,
 		false, // m_fNegate
 		GPOS_WSZ_LIT("Prints MEMO after optimization.")
 		},
 
 		{
-		EopttracePrintScheduler,
+		EopttracePrintJobScheduler,
 		&optimizer_print_job_scheduler,
 		false, // m_fNegate
 		GPOS_WSZ_LIT("Prints jobs in scheduler on each job completion.")
 		},
 
 		{
-		EopttracePrintExprProps,
+		EopttracePrintExpressionProperties,
 		&optimizer_print_expression_properties,
 		false, // m_fNegate
 		GPOS_WSZ_LIT("Prints expression properties.")
 		},
 
 		{
-		EopttracePrintGrpProps,
+		EopttracePrintGroupProperties,
 		&optimizer_print_group_properties,
 		false, // m_fNegate
 		GPOS_WSZ_LIT("Prints group properties.")
 		},
 
 		{
-		EopttracePrintOptCtxt,
+		EopttracePrintOptimizationContext,
 		&optimizer_print_optimization_context,
 		false, // m_fNegate
 		GPOS_WSZ_LIT("Prints optimization context.")
 		},
 
 		{
-		EopttracePrintOptStats,
+		EopttracePrintOptimizationStatistics,
 		&optimizer_print_optimization_stats,
 		false, // m_fNegate
 		GPOS_WSZ_LIT("Prints optimization stats.")

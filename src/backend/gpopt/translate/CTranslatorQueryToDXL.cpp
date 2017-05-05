@@ -621,7 +621,7 @@ CTranslatorQueryToDXL::PdxlnSPJForGroupingSets
 CDXLNode *
 CTranslatorQueryToDXL::PdxlnFromQuery()
 {
-	CAutoTimer at("\n[OPT]: Query To DXL Translation Time", GPOS_FTRACE(EopttracePrintOptStats));
+	CAutoTimer at("\n[OPT]: Query To DXL Translation Time", GPOS_FTRACE(EopttracePrintOptimizationStatistics));
 
 	switch (m_pquery->commandType)
 	{
