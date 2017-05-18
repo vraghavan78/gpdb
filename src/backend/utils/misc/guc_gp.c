@@ -510,8 +510,8 @@ bool		optimizer_enable_dml_triggers;
 bool		optimizer_enable_dml_constraints;
 bool		optimizer_enable_master_only_queries;
 bool		optimizer_enable_hashjoin;
-bool		optimizer_enable_dynamic_table_scan;
-bool		optimizer_enable_index_scan;
+bool		optimizer_enable_dynamictablescan;
+bool		optimizer_enable_indexscan;
 
 /* Optimizer plan enumeration related GUCs */
 bool		optimizer_enumerate_plans;
@@ -2798,22 +2798,22 @@ struct config_bool ConfigureNamesBool_gp[] =
 	},
 
 	{
-		{"optimizer_enable_dynamic_table_scan", PGC_USERSET, DEVELOPER_OPTIONS,
+		{"optimizer_enable_dynamictablescan", PGC_USERSET, DEVELOPER_OPTIONS,
 			gettext_noop("Enables the optimizer's use of plans with dynamic table scan."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-		&optimizer_enable_dynamic_table_scan,
+		&optimizer_enable_dynamictablescan,
 		true, NULL, NULL
 	},
 
 	{
-		{"optimizer_enable_index_scan", PGC_USERSET, DEVELOPER_OPTIONS,
+		{"optimizer_enable_indexscan", PGC_USERSET, DEVELOPER_OPTIONS,
 			gettext_noop("Enables the optimizer's use of plans with index scan."),
 			NULL,
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
-		&optimizer_enable_index_scan,
+		&optimizer_enable_indexscan,
 		true, NULL, NULL
 	},
 

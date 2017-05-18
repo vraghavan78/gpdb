@@ -516,7 +516,7 @@ where
 create table mpp_bfv_1(col1 int, col2 text, col3 numeric) distributed by (col1);
 
 -- this cannot go to the _setup file, because it is not propagated here
-set optimizer_enable_index_scan = off;
+set optimizer_enable_indexscan = off;
 set optimizer_enable_master_only_queries = on;
 
 -- query that mentions no tables should have no motions
@@ -535,7 +535,7 @@ select count_operator('select * from generate_series(1,10)', 'Motion');
 select count_operator('select col2 from mpp_bfv_1;', 'Motion');
 
 -- this cannot go to the _teardown file, because it is not propagated here
-reset optimizer_enable_index_scan;
+reset optimizer_enable_indexscan;
 
 create table mpp_bfv_2(a int, b text, primary key (a)) distributed by (a);
 

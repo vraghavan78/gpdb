@@ -412,7 +412,7 @@ analyze mpp24151_pt;
 analyze mpp24151_t;
 
 -- TEST
-set optimizer_enable_dynamic_table_scan = off;
+set optimizer_enable_dynamictablescan = off;
 
 select count_operator('select * from mpp24151_t, mpp24151_pt where tid = ptid and pt1 = E''hello0'';','Result');
 select * from mpp24151_t, mpp24151_pt where tid = ptid and pt1 = 'hello0';
@@ -423,7 +423,7 @@ drop index ptid_idx;
 drop index pt1_idx;
 drop table if exists mpp24151_t;
 drop table if exists mpp24151_pt;
-reset optimizer_enable_dynamic_table_scan;
+reset optimizer_enable_dynamictablescan;
 -- end_ignore
 
 
@@ -525,7 +525,7 @@ select find_operator('(select * from dts where c2 = 1) union (select * from dts 
 (select * from dts where c2 = 9) union
 (select * from dts where c2 = 10);
 
-set optimizer_enable_dynamic_table_scan = off;
+set optimizer_enable_dynamictablescan = off;
 select find_operator('(select * from dis where c3 = 1) union (select * from dis where c3 = 2) union (select * from dis where c3 = 3) union (select * from dis where c3 = 4) union (select * from dis where c3 = 5) union (select * from dis where c3 = 6) union (select * from dis where c3 = 7) union (select * from dis where c3 = 8) union (select * from dis where c3 = 9) union (select * from dis where c3 = 10);', 'Dynamic Index Scan');
 
 (select * from dis where c3 = 1) union
@@ -550,7 +550,7 @@ drop table if exists dbs;
 drop index dis_index;
 drop table if exists dis;
 drop table if exists dts;
-reset optimizer_enable_dynamic_table_scan;
+reset optimizer_enable_dynamictablescan;
 -- end_ignore
 
 --
@@ -574,7 +574,7 @@ create index pp_1_prt_1_idx on pp_1_prt_1(c);
 create index pp_rest_1_idx on pp_1_prt_2(c,a);
 create index pp_rest_2_idx on pp_1_prt_3(c,a);
 -- TEST
-set optimizer_enable_dynamic_table_scan = off;
+set optimizer_enable_dynamictablescan = off;
 select * from pp where b=2 and c=2;
 select count_operator('select * from pp where b=2 and c=2;','Partition Selector');
 
@@ -584,7 +584,7 @@ drop index if exists pp_rest_2_idx;
 drop index if exists pp_rest_1_idx;
 drop index if exists pp_1_prt_1_idx;
 drop table if exists pp;
-reset optimizer_enable_dynamic_table_scan;
+reset optimizer_enable_dynamictablescan;
 reset optimizer_segments;
 set optimizer_partition_selection_log=off;
 -- end_ignore

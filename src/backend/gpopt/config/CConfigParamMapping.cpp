@@ -455,13 +455,13 @@ CConfigParamMapping::PbsPack
 		pbsHashJoin->Release();
 	}
 
-	if (!optimizer_enable_dynamic_table_scan)
+	if (!optimizer_enable_dynamictablescan)
 	{
 		// disable dynamic table scan if the corresponding GUC is turned off
 		pbs->FExchangeSet(GPOPT_DISABLE_XFORM_TF(CXform::ExfDynamicGet2DynamicTableScan));
 	}
 
-	if (!optimizer_enable_index_scan)
+	if (!optimizer_enable_indexscan)
 	{
 		// disable index scan if the corresponding GUC is turned off
 		pbs->FExchangeSet(GPOPT_DISABLE_XFORM_TF(CXform::ExfIndexGet2IndexScan));

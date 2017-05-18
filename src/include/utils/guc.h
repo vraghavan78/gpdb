@@ -438,8 +438,8 @@ extern bool	optimizer_enable_dml_constraints;
 extern bool optimizer_enable_direct_dispatch;
 extern bool optimizer_enable_master_only_queries;
 extern bool optimizer_enable_hashjoin;
-extern bool optimizer_enable_dynamic_table_scan;
-extern bool optimizer_enable_index_scan;
+extern bool optimizer_enable_dynamictablescan;
+extern bool optimizer_enable_indexscan;
 
 /* Optimizer plan enumeration related GUCs */
 extern bool optimizer_enumerate_plans;

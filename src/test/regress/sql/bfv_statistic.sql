@@ -1,10 +1,5 @@
 create schema bfv_statistic;
 set search_path=bfv_statistic;
-
--- start_ignore
-create language plpythonu;
--- end_ignore
-
 create table foo (a int, b int) distributed by (a);
 insert into foo values (1,1);
 insert into foo values (0,1);
@@ -105,12 +100,6 @@ select v from (select max(c1) as v, 1 as r from t1 union select 1 as v, 2 as r )
 select v from (select max(c1) as v, 1 as r from t1 union all select 1 as v, 2 as r ) as foo group by v;
 
 select v from (select max(c1) as v, 1 as r from t1 union select 1 as v, 2 as r ) as foo;
-
-select v from (select max(c1) as v, 1 as r from t1 union select 1 as v, 2 as r ) as foo group by v;
-
-select v from (select max(c1) as v, 1 as r from t1 union select 1 as v, 2 as r ) as foo group by v;
-
-select v from (select max(c1) as v, 1 as r from t1 union select 1 as v, 2 as r ) as foo group by v;
 
 --
 -- test the generation of histogram boundaries for numeric and real data types
