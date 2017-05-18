@@ -96,7 +96,7 @@ select * from t1,t2 where t1.x = 100 and t1.x = t2.y and t1.x <= t2.x;
 
 create table hjn_test (i int, j int) distributed by (i,j);
 insert into hjn_test values(3, 4);
-create table int4_tbl (f1 int);
+create table int4_tbl (f1 int) distributed by (f1);
 insert into int4_tbl values(123456), (-2147483647), (0), (-123456), (2147483647);
 select count(*) from hjn_test, (select 3 as bar) foo where hjn_test.i = least (foo.bar,4) and hjn_test.j = 4;
 select count(*) from hjn_test, (select 3 as bar) foo where hjn_test.i = least (foo.bar,(array[4])[1]) and hjn_test.j = (array[4])[1];
