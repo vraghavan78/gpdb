@@ -27,7 +27,7 @@ create domain domainnumeric numeric(8,2);
 create domain domainint4 int4;
 create domain domaintext text;
 
--- Test explicit coercions --- these should succeed (and truncate)
+-- Test explicit coercions, these should succeed (and truncate)
 SELECT cast('123456' as domainvarchar);
 SELECT cast('12345' as domainvarchar);
 
@@ -118,18 +118,10 @@ create table nulltest
 INSERT INTO nulltest DEFAULT VALUES;
 INSERT INTO nulltest values ('a', 'b', 'c', 'd', 'c');  -- Good
 insert into nulltest values ('a', 'b', 'c', 'd', NULL);
--- temporally ignore and will be sovled by
---   https://www.pivotaltracker.com/story/show/116312671
--- start_ignore
 insert into nulltest values ('a', 'b', 'c', 'd', 'a');
--- end_ignore
 INSERT INTO nulltest values (NULL, 'b', 'c', 'd', 'd');
 INSERT INTO nulltest values ('a', NULL, 'c', 'd', 'c');
--- temporally ignore and will be sovled by
---   https://www.pivotaltracker.com/story/show/116312671
--- start_ignore
 INSERT INTO nulltest values ('a', 'b', NULL, 'd', 'c');
--- end_ignore
 INSERT INTO nulltest values ('a', 'b', 'c', NULL, 'd'); -- Good
 
 -- Test copy
