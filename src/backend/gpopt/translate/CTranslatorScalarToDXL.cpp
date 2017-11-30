@@ -1564,6 +1564,19 @@ CTranslatorScalarToDXL::PdxlnScWindowFunc
 
 	GPOS_ASSERT(EdxlwinstageSentinel != edxlwinstage && "Invalid window stage");
 
+	if (3103 == pwindowfunc->winfnoid)
+	{
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("PERCENT_RANK Window Functions"));
+	}
+	else if (3104 == pwindowfunc->winfnoid)
+	{
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("CUME_DIST Window Functions"));
+	}
+	else if (3105 == pwindowfunc->winfnoid)
+	{
+		GPOS_RAISE(gpdxl::ExmaDXL, gpdxl::ExmiQuery2DXLUnsupportedFeature, GPOS_WSZ_LIT("NTILE(int4) Window Functions"));
+	}
+
 	/*
 	 * ORCA's ScalarWindowRef object doesn't have fields for the 'winstar'
 	 * and 'winagg', so we lose that information in the translation.
