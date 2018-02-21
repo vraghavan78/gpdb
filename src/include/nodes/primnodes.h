@@ -604,7 +604,7 @@ typedef enum SubLinkType
 	EXPR_SUBLINK,
 	ARRAY_SUBLINK,
 	CTE_SUBLINK,				/* for SubPlans only */
-	NOT_EXISTS_SUBLINK
+	NOT_EXISTS_SUBLINK /* GPORCA use NOT_EXIST_SUBLINK to implement correlated left anti semijoin. */
 } SubLinkType;
 
 
