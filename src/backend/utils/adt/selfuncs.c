@@ -1217,7 +1217,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 		 * them by applying the pattern operator, so there's no reason to
 		 * approximate.  (If the MCVs cover a significant part of the total
 		 * population, this gives us a big leg up in accuracy.)
-		 /
+		 */
 		Selectivity selec;
 		int			hist_size;
 		FmgrInfo	opproc;
