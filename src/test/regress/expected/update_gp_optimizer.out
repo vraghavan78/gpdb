@@ -130,13 +130,12 @@ WHERE t1.user_vie_project_code_pk = keo1.user_vie_project_code_pk;
                                                                                                                ->  Hash
                                                                                                                      ->  Aggregate
                                                                                                                            ->  Gather Motion 3:1  (slice4; segments: 3)
-                                                                                                                                 ->  Aggregate
                                                                                                                                        ->  Table Scan on keo4
                                                          ->  Hash
                                                                ->  Broadcast Motion 3:3  (slice6; segments: 3)
                                                                      ->  Table Scan on keo2
  Optimizer: PQO version 2.55.13
-(41 rows)
+(40 rows)
 
 UPDATE keo1 SET user_vie_act_cntr_marg_cum = 234.682 FROM
     ( SELECT a.user_vie_project_code_pk FROM keo1 a INNER JOIN keo2 b 
