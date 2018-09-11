@@ -58,7 +58,7 @@ explain analyze select d, count(*) from smallt group by d;
  Memory used:  128000kB
  Optimizer: PQO version 2.72.0
  Total runtime: 4.805 ms
-(15 rows
+(15 rows)
 
 set statement_mem=2560;
 select count(*) from (select i, t, d, count(*) from bigt group by i, t, d) tmp;

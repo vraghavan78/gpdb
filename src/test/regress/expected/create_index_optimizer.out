@@ -529,11 +529,11 @@ SELECT count(*) FROM point_tbl WHERE f1 <@ box '(0,0,100,100)';
 --------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Result
                ->  Index Scan using gpointind on point_tbl
                      Index Cond: f1 <@ '(100,100),(0,0)'::box
                      Filter: f1 <@ '(100,100),(0,0)'::box
- Optimizer: PQO version 2.68.0
+ Optimizer: PQO version 2.74.0
 (7 rows)
 
 SELECT count(*) FROM point_tbl WHERE f1 <@ box '(0,0,100,100)';
@@ -2956,15 +2956,15 @@ SELECT * FROM tenk1
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM tenk1
   WHERE hundred = 42 AND (thousand = 42 OR thousand = 99);
-                                     QUERY PLAN                                      
--------------------------------------------------------------------------------------
+                         QUERY PLAN                         
+------------------------------------------------------------
  Aggregate
    ->  Gather Motion 3:1  (slice1; segments: 3)
-         ->  Aggregate
+         ->  Result
                ->  Index Scan using tenk1_hundred on tenk1
                      Index Cond: hundred = 42
                      Filter: thousand = 42 OR thousand = 99
- Optimizer: PQO version 2.64.0
+ Optimizer: PQO version 2.74.0
 (7 rows)
 
 SELECT count(*) FROM tenk1
