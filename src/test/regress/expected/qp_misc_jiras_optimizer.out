@@ -3568,25 +3568,20 @@ then 'MO' else 'foo' end
 case when ir_call_type_group_code in ('H', 'VH', 'PCB') then 'Thailland'
 else 'Unidentify' end
 ;
-                                                            QUERY PLAN                                                             
------------------------------------------------------------------------------------------------------------------------------------
+                                                                                                                                  QUERY PLAN                                                                                                                                  
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice2; segments: 3)  (cost=0.00..431.00 rows=1 width=8)
    ->  Result  (cost=0.00..431.00 rows=1 width=8)
          ->  GroupAggregate  (cost=0.00..431.00 rows=1 width=8)
-               Group By: "?column?", "?column?"
+               Group Key: (CASE WHEN ir_call_supplementary_svc_code = ANY ('{S20,S21}'::bpchar[]) THEN 'MO'::text ELSE 'foo'::text END), (CASE WHEN ir_call_type_group_code::text = ANY ('{H,VH,PCB}'::text[]) THEN 'Thailland'::text ELSE 'Unidentify'::text END)
                ->  Sort  (cost=0.00..431.00 rows=1 width=16)
-                     Sort Key: "?column?", "?column?"
+                     Sort Key: (CASE WHEN ir_call_supplementary_svc_code = ANY ('{S20,S21}'::bpchar[]) THEN 'MO'::text ELSE 'foo'::text END), (CASE WHEN ir_call_type_group_code::text = ANY ('{H,VH,PCB}'::text[]) THEN 'Thailland'::text ELSE 'Unidentify'::text END)
                      ->  Redistribute Motion 3:3  (slice1; segments: 3)  (cost=0.00..431.00 rows=1 width=16)
-                           Hash Key: "?column?", "?column?"
-                           ->  GroupAggregate  (cost=0.00..431.00 rows=1 width=16)
-                                 Group By: "?column?", "?column?"
-                                 ->  Sort  (cost=0.00..431.00 rows=1 width=16)
-                                       Sort Key: "?column?", "?column?"
-                                       ->  Result  (cost=0.00..431.00 rows=1 width=16)
-                                             ->  Table Scan on ir_voice_sms_and_data  (cost=0.00..431.00 rows=1 width=16)
- Settings:  enable_bitmapscan=off; enable_groupagg=on; enable_indexscan=on; enable_seqscan=off; optimizer=on; optimizer_segments=3
- Optimizer status: PQO version 1.624
-(16 rows)
+                           Hash Key: (CASE WHEN ir_call_supplementary_svc_code = ANY ('{S20,S21}'::bpchar[]) THEN 'MO'::text ELSE 'foo'::text END), (CASE WHEN ir_call_type_group_code::text = ANY ('{H,VH,PCB}'::text[]) THEN 'Thailland'::text ELSE 'Unidentify'::text END)
+                           ->  Result  (cost=0.00..431.00 rows=1 width=16)
+                                 ->  Table Scan on ir_voice_sms_and_data  (cost=0.00..431.00 rows=1 width=16)
+ Optimizer: PQO version 2.74.0
+(11 rows)
 
 DROP TABLE qp_misc_jiras.ir_voice_sms_and_data;
 create table qp_misc_jiras.r
