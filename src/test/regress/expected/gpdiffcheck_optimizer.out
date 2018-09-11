@@ -251,7 +251,6 @@ select a.* from gpd1 as a, gpd1 as b where b.c1 in (select max(c1) from gpd1);
 (16 rows)
 
 explain analyze select a.* from gpd1 as a, gpd1 as b where b.c1 in (select max(c1) from gpd1);
-explain analyze select a.* from gpd1 as a, gpd1 as b where b.c1 in (select max(c1) from gpd1);
                                                                      QUERY PLAN                                                                      
 -----------------------------------------------------------------------------------------------------------------------------------------------------
  Gather Motion 3:1  (slice4; segments: 3)  (cost=0.00..1724.00 rows=1 width=12) (actual time=4.362..4.367 rows=8 loops=2)
