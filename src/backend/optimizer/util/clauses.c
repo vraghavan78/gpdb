@@ -2452,7 +2452,8 @@ fold_constants(PlannerInfo *root, Query *q, ParamListInfo boundParams, Size max_
  * based on the elements in the ArrayExpr. It doesn't currently know how to
  * extract elements from an Array const, however, so to enable those
  * optimizations in ORCA, we convert small Array Consts into corresponding
- * ArrayExprs.
+ * ArrayExprs. For array constants it will also return the number of elements in
+ * the array constant for the caller's use
  *
  * If the argument is not an array constant or the number of elements in the
  * array is greater than optimizer_array_expansion_threshold, returns the
@@ -2460,7 +2461,7 @@ fold_constants(PlannerInfo *root, Query *q, ParamListInfo boundParams, Size max_
  * large arrays.
  */
 Expr *
-transform_array_Const_to_ArrayExpr(Const *c)
+transform_array_Const_to_ArrayExpr(Const *c, int *array_len)
 {
 	Oid			elemtype;
 	int16		elemlen;
@@ -2490,6 +2491,7 @@ transform_array_Const_to_ArrayExpr(Const *c)
 	get_typlenbyvalalign(elemtype, &elemlen, &elembyval, &elemalign);
 	deconstruct_array(ac, elemtype, elemlen, elembyval, elemalign,
 					  &elems, &nulls, &nelems);
+	*array_len = nelems;
 
 	if (nelems > optimizer_array_expansion_threshold)
 		return (Expr *) c;	/* too many elements */
